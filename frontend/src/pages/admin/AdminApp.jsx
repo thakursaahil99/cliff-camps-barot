@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Ban, CalendarDays, Check, CircleCheck, Copy, Eye, LogOut, MessageCircle, Plus, RefreshCw, Save, Search, Tent, Trash2, Wallet, X } from 'lucide-react';
+import { Ban, CalendarDays, Check, CircleCheck, Copy, Eye, ImagePlus, LogOut, MessageCircle, Plus, RefreshCw, Save, Search, Star, Tent, Trash2, Wallet, X } from 'lucide-react';
 import { api, adminToken, qs } from '../../lib/api.js';
 import { inr, prettyDate, toISO } from '../../lib/format.js';
 import { Logo, Seo, Spinner, StatusPill } from '../../components/ui.jsx';
+import { compressImage } from '../../lib/image.js';
 
 const TABS = [
   { id: 'bookings', label: 'Bookings', icon: CalendarDays },
@@ -488,8 +489,73 @@ function CalendarTab({ notify }) {
 }
 
 // ------------------------------------------------------------------ tents
+/** Tent photos: upload from phone/computer, remove, choose the cover. Changes are saved straight away. */
+function TentPhotos({ tent, images, setImages, notify }) {
+  const [uploading, setUploading] = useState(0);
+  const save = async (next, message) => {
+    const prev = images;
+    setImages(next);
+    try {
+      await api(`/admin/tents/${tent.id}`, { method: 'PATCH', admin: true, body: { images: next } });
+      notify(message);
+    } catch (err) {
+      setImages(prev);
+      notify(err.message, true);
+    }
+  };
+  const upload = async (e) => {
+    const files = [...(e.target.files || [])].filter((f) => f.type.startsWith('image/'));
+    e.target.value = '';
+    if (!files.length) return;
+    setUploading(files.length);
+    const urls = [];
+    for (const file of files) {
+      try {
+        const image = await compressImage(file, 1600);
+        const { url } = await api('/admin/tents/photos', { method: 'POST', admin: true, body: { image } });
+        urls.push(url);
+      } catch (err) {
+        notify(`${file.name}: ${err.message || 'could not upload'}`, true);
+      }
+      setUploading((n) => n - 1);
+    }
+    if (urls.length) await save([...images, ...urls], `${urls.length} photo${urls.length > 1 ? 's' : ''} added`);
+  };
+  const remove = (i) => window.confirm('Remove this photo from the tent?') && save(images.filter((_, k) => k !== i), 'Photo removed');
+  const makeCover = (i) => save([images[i], ...images.filter((_, k) => k !== i)], 'Cover photo updated');
+
+  return (
+    <div>
+      <span className="label">Photos <span className="font-normal text-ink/50">(first one is the cover · saved automatically)</span></span>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+        {images.map((src, i) => (
+          <div key={src} className="relative aspect-square overflow-hidden rounded-xl bg-cream ring-1 ring-forest/10">
+            <img src={src} alt={`${tent.name} photo ${i + 1}`} loading="lazy" className="h-full w-full object-cover" />
+            {i === 0 && <span className="absolute bottom-1 left-1 rounded-full bg-sun px-2 py-0.5 text-[10px] font-bold text-forest">Cover</span>}
+            <div className="absolute top-1 right-1 flex gap-1">
+              {i > 0 && (
+                <button type="button" onClick={() => makeCover(i)} aria-label="Make cover photo" title="Make cover photo" className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-forest shadow hover:bg-sun">
+                  <Star size={14} />
+                </button>
+              )}
+              <button type="button" onClick={() => remove(i)} aria-label="Remove photo" title="Remove photo" className="grid h-7 w-7 place-items-center rounded-full bg-white/90 text-pin shadow hover:bg-pin hover:text-white">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
+        ))}
+        <label className={`flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-forest/20 text-center text-xs font-semibold text-forest/70 transition hover:border-lime hover:bg-lime/5 ${uploading ? 'pointer-events-none opacity-70' : ''}`}>
+          {uploading ? <><Spinner /> Uploading {uploading}…</> : <><ImagePlus size={22} className="text-teal-700" /> Add photos</>}
+          <input type="file" accept="image/*" multiple onChange={upload} className="sr-only" disabled={!!uploading} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 function TentEditor({ tent, onSaved, notify }) {
-  const [t, setT] = useState({ ...tent, amenitiesText: (tent.amenities || []).join('\n'), imagesText: (tent.images || []).join('\n') });
+  const [t, setT] = useState({ ...tent, amenitiesText: (tent.amenities || []).join('\n') });
+  const [images, setImages] = useState(tent.images || []);
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setT({ ...t, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
   const save = async (e) => {
@@ -507,7 +573,7 @@ function TentEditor({ tent, onSaved, notify }) {
           units: Number(t.units),
           active: t.active,
           amenities: t.amenitiesText.split('\n').map((s) => s.trim()).filter(Boolean),
-          images: t.imagesText.split('\n').map((s) => s.trim()).filter(Boolean)
+          images
         }
       });
       notify(`${t.name} saved`);
@@ -521,7 +587,7 @@ function TentEditor({ tent, onSaved, notify }) {
   return (
     <form onSubmit={save} className="space-y-3 rounded-2xl bg-white p-5 shadow-sm">
       <div className="flex items-center gap-3">
-        {t.images?.[0] && <img src={t.images[0]} alt="" className="h-14 w-14 rounded-xl object-cover" />}
+        {images[0] && <img src={images[0]} alt="" className="h-14 w-14 rounded-xl object-cover" />}
         <input aria-label="Tent name" className="field font-display text-2xl" value={t.name} onChange={set('name')} />
       </div>
       <div className="grid grid-cols-3 gap-2">
@@ -530,10 +596,8 @@ function TentEditor({ tent, onSaved, notify }) {
         <div><label className="label" htmlFor={`u-${tent.id}`}>No. of tents</label><input id={`u-${tent.id}`} type="number" min={1} className="field" value={t.units} onChange={set('units')} /></div>
       </div>
       <div><label className="label" htmlFor={`d-${tent.id}`}>Description</label><textarea id={`d-${tent.id}`} rows={3} className="field" value={t.description || ''} onChange={set('description')} /></div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <div><label className="label" htmlFor={`a-${tent.id}`}>Amenities (one per line)</label><textarea id={`a-${tent.id}`} rows={4} className="field text-xs" value={t.amenitiesText} onChange={set('amenitiesText')} /></div>
-        <div><label className="label" htmlFor={`i-${tent.id}`}>Photos (paths, one per line)</label><textarea id={`i-${tent.id}`} rows={4} className="field font-mono text-xs" value={t.imagesText} onChange={set('imagesText')} /></div>
-      </div>
+      <TentPhotos tent={tent} images={images} setImages={setImages} notify={notify} />
+      <div><label className="label" htmlFor={`a-${tent.id}`}>Amenities (one per line)</label><textarea id={`a-${tent.id}`} rows={4} className="field text-xs" value={t.amenitiesText} onChange={set('amenitiesText')} /></div>
       <div className="flex items-center justify-between">
         <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-forest">
           <input type="checkbox" checked={t.active} onChange={set('active')} className="h-5 w-5 accent-lime-700" /> Bookable on website

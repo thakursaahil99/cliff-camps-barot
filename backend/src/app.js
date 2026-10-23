@@ -7,6 +7,8 @@ import publicRoutes from './routes/public.js';
 import adminRoutes from './routes/admin.js';
 import webhookRoutes from './routes/webhooks.js';
 import { HttpError } from './utils/http.js';
+import { db } from './db/index.js';
+import { TENT_PHOTOS_DIR } from './db/memory.js';
 
 export function createApp() {
   const app = express();
@@ -38,12 +40,14 @@ export function createApp() {
 
   app.use('/api/admin', adminRoutes);
   app.use('/api', publicRoutes);
+  // Local JSON store keeps uploaded tent photos on disk (Supabase serves them from its public bucket)
+  if (db().kind === 'memory') app.use('/api/tent-photos', express.static(TENT_PHOTOS_DIR, { maxAge: '7d', fallthrough: false }));
 
   app.use('/api', (_req, _res, next) => next(new HttpError(404, 'API route not found')));
 
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, _next) => {
-    if (err.type === 'entity.too.large') err = new HttpError(413, 'Upload too large (max 2 MB screenshot)');
+    if (err.type === 'entity.too.large') err = new HttpError(413, 'Upload too large (max 2 MB image)');
     if (err.type === 'entity.parse.failed') err = new HttpError(400, 'Invalid JSON body');
     const status = err.status && err.status < 600 ? err.status : 500;
     if (status >= 500) console.error(`[api] ${req.method} ${req.originalUrl}`, err);

@@ -179,3 +179,8 @@ grant execute on function public.create_booking(jsonb, int) to service_role;
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('payment-proofs', 'payment-proofs', false, 2097152, array['image/png','image/jpeg','image/webp'])
 on conflict (id) do nothing;
+
+-- ---------------------------------------------------------------- storage for tent photos (public, uploaded from Admin -> Tents)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('tent-photos', 'tent-photos', true, 3145728, array['image/png','image/jpeg','image/webp'])
+on conflict (id) do nothing;

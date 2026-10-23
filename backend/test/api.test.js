@@ -259,6 +259,15 @@ test('admin: block dates, tent prices, cancel frees dates, iCal feed', async () 
   assert.equal((await api('POST', '/bookings', guest({ check_in: D(81), check_out: D(82) }))).status, 409);
   assert.equal((await admin('DELETE', `/admin/blocked-dates/${blk.body.blocked[0].id}`)).status, 204);
 
+  // Tent photo upload from the admin panel
+  const png = 'data:image/png;base64,' + Buffer.from('89504e470d0a1a0a', 'hex').toString('base64');
+  assert.equal((await api('POST', '/admin/tents/photos', { image: png })).status, 401);
+  assert.equal((await admin('POST', '/admin/tents/photos', { image: 'data:text/plain;base64,aGk=' })).status, 400);
+  const photo = await admin('POST', '/admin/tents/photos', { image: png });
+  assert.equal(photo.status, 201, JSON.stringify(photo.body));
+  assert.equal((await fetch(base.replace(/\/api$/, '') + photo.body.url)).status, 200);
+  assert.equal((await admin('PATCH', `/admin/tents/${tentId}`, { images: [photo.body.url] })).body.tent.images[0], photo.body.url);
+
   const price = await admin('PATCH', `/admin/tents/${tentId}`, { price_per_night: 2800 });
   assert.equal(Number(price.body.tent.price_per_night), 2800);
   const q = await api('POST', '/bookings', guest({ check_in: D(90), check_out: D(91), email: 'price@example.com' }));

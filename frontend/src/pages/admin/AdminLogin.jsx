@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock } from 'lucide-react';
+import { Eye, EyeOff, Lock } from 'lucide-react';
 import { api, adminToken } from '../../lib/api.js';
 import { Logo, Seo, Spinner } from '../../components/ui.jsx';
 import Snowfall from '../../components/Snowfall.jsx';
@@ -10,6 +10,7 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -49,7 +50,18 @@ export default function AdminLogin() {
         <label htmlFor="email" className="label">Email</label>
         <input id="email" type="email" autoComplete="username" className="field mb-4" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <label htmlFor="password" className="label">Password</label>
-        <input id="password" type="password" autoComplete="current-password" className="field" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <div className="relative">
+          <input id="password" type={showPassword ? 'text' : 'password'} autoComplete="current-password" className="field pr-12" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-pressed={showPassword}
+            className="absolute inset-y-0 right-1 my-auto grid h-10 w-10 place-items-center rounded-full text-forest/60 transition hover:bg-forest/5 hover:text-forest"
+          >
+            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
         {error && <p role="alert" className="mt-4 rounded-xl bg-pin/10 p-3 text-sm text-pin">{error}</p>}
         <button type="submit" disabled={busy} className="btn-dark mt-6 w-full py-3.5">
           {busy ? <Spinner /> : <Lock size={16} />} Sign in

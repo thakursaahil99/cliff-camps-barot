@@ -1,3 +1,4 @@
+import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { config } from '../config.js';
 import { conflict, HttpError } from '../utils/http.js';
@@ -7,6 +8,7 @@ export function createSupabaseStore() {
     auth: { persistSession: false, autoRefreshToken: false }
   });
   const bucket = config.supabase.proofsBucket;
+  const TENT_PHOTOS = 'tent-photos';
 
   const run = async (query) => {
     const { data, error } = await query;
@@ -102,6 +104,13 @@ export function createSupabaseStore() {
       const { error } = await sb.storage.from(bucket).upload(path, buffer, { contentType: mime, upsert: true });
       if (error) throw new HttpError(500, `Could not store screenshot: ${error.message}`);
       return path;
+    },
+    /** Tent photo in the public `tent-photos` bucket; returns its public URL. */
+    async saveTentPhoto(buffer, mime) {
+      const path = `tents/${crypto.randomUUID()}.${mime.split('/')[1]}`;
+      const { error } = await sb.storage.from(TENT_PHOTOS).upload(path, buffer, { contentType: mime, cacheControl: '31536000' });
+      if (error) throw new HttpError(500, `Could not store photo: ${error.message}`);
+      return sb.storage.from(TENT_PHOTOS).getPublicUrl(path).data.publicUrl;
     },
     async getProofUrl(path) {
       const { data, error } = await sb.storage.from(bucket).createSignedUrl(path, 600);

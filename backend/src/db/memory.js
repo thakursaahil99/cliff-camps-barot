@@ -10,6 +10,8 @@ import { conflict } from '../utils/http.js';
 const DATA_DIR = process.env.MEMORY_DB_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.data');
 const FILE = path.join(DATA_DIR, 'dev-db.json');
 const PROOFS = path.join(DATA_DIR, 'proofs');
+// Served by app.js at /api/tent-photos in local development
+export const TENT_PHOTOS_DIR = path.join(DATA_DIR, 'tent-photos');
 
 const empty = () => ({ tents: [], bookings: [], blocked_dates: [], payments: [], admins: [] });
 
@@ -149,6 +151,12 @@ export function createMemoryStore() {
       const name = `${paymentId}.${mime.split('/')[1]}`;
       fs.writeFileSync(path.join(PROOFS, name), buffer);
       return name;
+    },
+    async saveTentPhoto(buffer, mime) {
+      fs.mkdirSync(TENT_PHOTOS_DIR, { recursive: true });
+      const name = `${crypto.randomUUID()}.${mime.split('/')[1]}`;
+      fs.writeFileSync(path.join(TENT_PHOTOS_DIR, name), buffer);
+      return `/api/tent-photos/${name}`;
     },
     async getProofUrl(proofPath) {
       const buf = fs.readFileSync(path.join(PROOFS, path.basename(proofPath)));

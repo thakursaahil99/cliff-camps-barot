@@ -96,7 +96,18 @@ const tentFields = {
   sort_order: z.coerce.number().int().min(0).max(1000),
   active: z.boolean()
 };
-export const tentPatchBody = z.object(tentFields).partial().refine((o) => Object.keys(o).length > 0, 'Nothing to update');
+export const tentPhotoBody = z.object({
+  image: z
+    .string()
+    .max(2_800_000, 'Photo too large (max 2 MB after compression)')
+    .regex(DATA_URL, 'Photo must be a PNG, JPG or WebP image')
+    .transform((s) => {
+      const [, mime, b64] = DATA_URL.exec(s);
+      return { mime, buffer: Buffer.from(b64, 'base64') };
+    })
+});
+
+export const tentPatchBody =z.object(tentFields).partial().refine((o) => Object.keys(o).length > 0, 'Nothing to update');
 export const tentCreateBody = z.object(tentFields).partial().required({ name: true, capacity: true, price_per_night: true });
 
 export const idParam = z.object({ id: uuid });

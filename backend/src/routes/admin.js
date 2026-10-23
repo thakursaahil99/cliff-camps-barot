@@ -100,6 +100,11 @@ r.post('/tents', validate(schemas.tentCreateBody), ah(async (req, res) => {
   res.status(201).json({ tent: await db().createTent(req.body) });
 }));
 
+// Photo upload from the admin panel; returns the URL to add to a tent's `images`
+r.post('/tents/photos', validate(schemas.tentPhotoBody), ah(async (req, res) => {
+  res.status(201).json({ url: await db().saveTentPhoto(req.body.image.buffer, req.body.image.mime) });
+}));
+
 r.patch('/tents/:id', validate(schemas.idParam, 'params'), validate(schemas.tentPatchBody), ah(async (req, res) => {
   const tent = await db().updateTent(req.params.id, req.body);
   if (!tent) throw notFound('Tent not found');
