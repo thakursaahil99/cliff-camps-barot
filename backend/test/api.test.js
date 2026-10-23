@@ -114,7 +114,7 @@ test('create booking -> pending, emails, guest page, WhatsApp link', async () =>
   assert.equal(booking.total_price, 5000);
   assert.equal(booking.advance_amount, 1500);
   assert.match(booking.code, /^CC-[A-Z2-9]{6}$/);
-  assert.match(r.body.whatsappUrl, /^https:\/\/wa\.me\/918219850117\?text=/);
+  assert.match(r.body.whatsappUrl, /^https:\/\/api\.whatsapp\.com\/send\?phone=918219850117&text=/);
   assert.equal(outbox().length, before + 2, 'guest confirmation + admin alert');
 
   const page = await api('GET', `/bookings/${booking.id}?t=${token}`);

@@ -7,7 +7,7 @@ import { bookingCode, bookingToken } from '../utils/tokens.js';
 import { holdsInventory, unavailableNights } from './availability.js';
 import { buildIcs, toRanges } from './ical.js';
 import { sendMail } from './mailer.js';
-import { adminNewBookingEmail, adminPaymentSubmittedEmail, bookingLink, guestCancelledEmail, guestRequestEmail, receiptEmail, thankYouText } from './emails.js';
+import { adminNewBookingEmail, adminPaymentSubmittedEmail, bookingLink, guestCancelledEmail, guestRequestEmail, receiptEmail, confirmedText, thankYouText } from './emails.js';
 import { balanceDue, inr, quote } from './pricing.js';
 
 const PAID = ['verified', 'captured'];
@@ -65,7 +65,7 @@ export function whatsappLink(b, tent) {
       ? ['', `Please share the payment details for the advance of ${inr(advanceDue)}.`]
       : [])
   ].join('\n');
-  return `https://wa.me/${config.business.whatsapp}?text=${encodeURIComponent(text)}`;
+  return `https://api.whatsapp.com/send?phone=${config.business.whatsapp}&text=${encodeURIComponent(text)}`;
 }
 
 export async function createBooking(input) {
@@ -148,6 +148,7 @@ export async function publicBooking(b, tent, payments) {
     dates_available: open && !holdsInventory(b) ? await stillAvailable(b) : true,
     whatsapp_url: whatsappLink(b, tent),
     thank_you_text: thankYouText(b),
+    confirmed_text: b.status === 'confirmed' ? confirmedText({ ...b, amount_paid: Number(b.amount_paid || 0) }) : null,
     payments: payments.map((p) => ({ id: p.id, method: p.method, amount: Number(p.amount), status: p.status, txn_id: maskTxn(p.txn_id), created_at: p.created_at }))
   };
 }

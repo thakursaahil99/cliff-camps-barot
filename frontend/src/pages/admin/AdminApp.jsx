@@ -50,26 +50,17 @@ function Toast({ toast }) {
 }
 
 // ------------------------------------------------------------------ bookings
-/** wa.me link to the guest's own number, with a confirmation (or follow-up) message ready to send. */
+/** WhatsApp link to the guest's own number, with a confirmation (or follow-up) message ready to send. */
 function guestWhatsapp(b) {
   const digits = b.phone.replace(/\D/g, '');
   const number = digits.length === 10 ? `91${digits}` : digits.replace(/^0+/, '');
   const stay = `${prettyDate(b.check_in, { year: 'numeric' })} to ${prettyDate(b.check_out, { year: 'numeric' })} (${b.nights} night${b.nights > 1 ? 's' : ''})`;
-  const text = b.status === 'confirmed'
-    ? [
-        `Hi ${b.guest_name}! Your booking at Cliff Camps, Barot is confirmed ✅`,
-        `Ref: ${b.code}`,
-        `Tent: ${b.tent?.name || ''} · ${b.guests} guest${b.guests > 1 ? 's' : ''}`,
-        `Dates: ${stay}`,
-        `Paid: ${inr(b.amount_paid)} · Balance at the camp: ${inr(b.balance_due)}`,
-        `Your booking & receipt: ${b.guest_link}`,
-        '',
-        'See you by the river!'
-      ]
-    : b.status === 'pending' && b.thank_you_text
-      ? [b.thank_you_text]
-      : [`Hi ${b.guest_name}, this is Cliff Camps, Barot about your booking ${b.code} (${stay}).`, `Your booking page: ${b.guest_link}`];
-  return `https://wa.me/${number}?text=${encodeURIComponent(text.join('\n'))}`;
+  // Confirmation / thank-you wording comes from the server, so the site and WhatsApp say the same thing
+  const text =
+    (b.status === 'confirmed' && b.confirmed_text) ||
+    (b.status === 'pending' && b.thank_you_text) ||
+    `Hi ${b.guest_name}, this is Cliff Camps, Barot about your booking ${b.code} (${stay}).\nYour booking page: ${b.guest_link}`;
+  return `https://api.whatsapp.com/send?phone=${number}&text=${encodeURIComponent(text)}`;
 }
 
 /** UPI payment the guest sent a screenshot of on WhatsApp - check it in the bank app first, then record it here. */
@@ -113,13 +104,23 @@ function BookingDrawer({ id, onClose, onChanged, notify }) {
   const act = async (action, extra = {}) => {
     const confirmText = { cancel: 'Cancel this booking? The guest will be emailed.', refund: 'Mark all payments refunded and cancel the booking?', mark_paid: 'Record the remaining balance as paid at the property?' }[action];
     if (confirmText && !window.confirm(confirmText)) return;
+    // Confirming a pending booking opens the guest's WhatsApp chat with the confirmation message.
+    // The tab is opened inside the click (pop-up blockers allow that) and pointed at WhatsApp once the server confirms.
+    const confirming = data?.booking.status === 'pending' && ['confirm', 'record_payment', 'mark_paid'].includes(action);
+    const waTab = confirming ? window.open('', '_blank') : null;
     setBusy(action);
     try {
       await api(`/admin/bookings/${id}`, { method: 'PATCH', admin: true, body: { action, ...extra } });
       notify(action === 'note' ? 'Notes saved' : action === 'record_payment' ? 'Payment recorded - booking confirmed and receipt emailed' : `Booking ${action.replace('_', ' ')} done`);
+      if (waTab) {
+        const fresh = await api(`/admin/bookings/${id}`, { admin: true }).catch(() => null);
+        if (fresh?.booking.status === 'confirmed' && !waTab.closed) waTab.location.href = guestWhatsapp(fresh.booking);
+        else waTab.close();
+      }
       reload();
       onChanged();
     } catch (err) {
+      waTab?.close();
       if (err.status === 409 && action === 'confirm' && window.confirm(`${err.message}\n\nConfirm anyway?`)) {
         setBusy(null);
         return act('confirm', { force: true });

@@ -37,7 +37,29 @@ export function thankYouText(b) {
   ].join('\n');
 }
 
-export const thankYouWhatsappLink = (b) => `https://wa.me/${waNumber(b.phone)}?text=${encodeURIComponent(thankYouText(b))}`;
+/** "Booking confirmed" message for the guest. Shown on the site once confirmed and sent on WhatsApp by the admin. */
+export function confirmedText(b) {
+  return [
+    `✅ Booking Confirmed - Cliff Camps Barot! 🏕️`,
+    '',
+    `Dear ${b.guest_name || 'Guest'},`,
+    '',
+    `Your booking at Cliff Camps Barot is confirmed. 🌿`,
+    `Booking ref: ${b.code}`,
+    `Dates: ${formatDate(b.check_in)} to ${formatDate(b.check_out)} (${b.nights} night${b.nights > 1 ? 's' : ''}) · ${b.guests} guest${b.guests > 1 ? 's' : ''}`,
+    `Paid: ${inr(b.amount_paid || 0)} · Balance at the camp: ${inr(balanceDue(b))}`,
+    `Your booking & receipt: ${bookingLink(b)}`,
+    '',
+    '📍 Location: Old Hatchery, Barot - Lohardi Road, Barot Valley, Himachal Pradesh',
+    '',
+    'See you by the river!',
+    'Cliff Camps Barot',
+    'Where Mountains Meet Peace. ❤️'
+  ].join('\n');
+}
+
+// api.whatsapp.com/send rather than wa.me: wa.me's redirect turns emoji into "�"
+export const thankYouWhatsappLink = (b) => `https://api.whatsapp.com/send?phone=${waNumber(b.phone)}&text=${encodeURIComponent(thankYouText(b))}`;
 
 const METHOD_LABEL ={ upi: 'UPI', razorpay: 'Razorpay (online)', property: 'Paid at property' };
 

@@ -26,7 +26,7 @@ export const BUSINESS = {
 };
 
 export const whatsappUrl = (text = 'Hi Cliff Camps! I would like to know more about camping at Barot.') =>
-  `https://wa.me/${BUSINESS.whatsapp}?text=${encodeURIComponent(text)}`;
+  `https://api.whatsapp.com/send?phone=${BUSINESS.whatsapp}&text=${encodeURIComponent(text)}`;
 
 export const NAV = [
   { to: '/', label: 'Home' },

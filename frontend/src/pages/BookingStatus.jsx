@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarDays, Check, Clock, MessageCircle, Phone, Printer, Users } from 'lucide-react';
@@ -85,12 +85,33 @@ export default function BookingStatus() {
 
   useEffect(() => { load(); }, [load]);
 
-  // While a UPI payment is being verified, check back every 30s
+  // Until the camp confirms, check back every 10s (and straight away when the guest returns to the tab),
+  // so the page turns to "confirmed" by itself the moment the admin records the payment.
+  const waiting = data?.booking.status === 'pending';
   useEffect(() => {
-    if (data?.booking.payment_status !== 'proof_submitted') return;
-    const t = setInterval(load, 30000);
-    return () => clearInterval(t);
-  }, [data?.booking.payment_status, load]);
+    if (!waiting) return;
+    const tick = () => document.visibilityState === 'visible' && load();
+    const t = setInterval(tick, 10000);
+    document.addEventListener('visibilitychange', tick);
+    window.addEventListener('focus', tick);
+    return () => {
+      clearInterval(t);
+      document.removeEventListener('visibilitychange', tick);
+      window.removeEventListener('focus', tick);
+    };
+  }, [waiting, load]);
+
+  // Celebrate when the status flips to confirmed while the page is open
+  const prevStatus = useRef(null);
+  const [justConfirmed, setJustConfirmed] = useState(false);
+  useEffect(() => {
+    const status = data?.booking.status;
+    if (prevStatus.current === 'pending' && status === 'confirmed') {
+      setJustConfirmed(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (status) prevStatus.current = status;
+  }, [data?.booking.status]);
 
   if (error) {
     return (
@@ -122,13 +143,20 @@ export default function BookingStatus() {
     <>
       <Seo title={`Booking ${b.code}`} noindex />
       <section className="grain relative overflow-hidden bg-forest pt-32 pb-16 text-cream sm:pt-40">
-        {(fresh || b.status === 'confirmed') && <Confetti />}
+        {(fresh || b.status === 'confirmed') && <Confetti key={b.status} />}
         <div className="container-x relative max-w-4xl">
-          <motion.div initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }} className={`mb-6 grid h-16 w-16 place-items-center rounded-full ${b.status === 'cancelled' ? 'bg-pin' : b.status === 'confirmed' ? 'bg-lime' : 'bg-sun'} text-forest shadow-xl`}>
+          <motion.div key={b.status} initial={{ scale: 0, rotate: -45 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 200, damping: 14 }} className={`mb-6 grid h-16 w-16 place-items-center rounded-full ${b.status === 'cancelled' ? 'bg-pin' : b.status === 'confirmed' ? 'bg-lime' : 'bg-sun'} text-forest shadow-xl`}>
             {b.status === 'confirmed' ? <Check size={32} strokeWidth={3} /> : <CalendarDays size={28} />}
           </motion.div>
           <p className="font-mono text-sm text-cream/60">Booking ref {b.code}</p>
-          <motion.h1 initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-1 text-6xl leading-[0.9] sm:text-7xl">
+          <AnimatePresence>
+            {justConfirmed && (
+              <motion.p role="status" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="mb-3 inline-flex items-center gap-2 rounded-full bg-lime px-4 py-1.5 text-sm font-bold text-forest shadow-lg">
+                <Check size={16} strokeWidth={3} /> Payment received - your booking is confirmed!
+              </motion.p>
+            )}
+          </AnimatePresence>
+          <motion.h1 key={heading} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="mt-1 text-6xl leading-[0.9] sm:text-7xl">
             {heading}
           </motion.h1>
           {b.status === 'pending' && b.payment_status === 'unpaid' && b.dates_available && (
@@ -156,7 +184,16 @@ export default function BookingStatus() {
       </section>
 
       <section className="container-x grid max-w-6xl gap-8 py-14 pb-36 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-8">
+        <div className="min-w-0 space-y-8">
+          {b.status === 'confirmed' && b.confirmed_text && (
+            <motion.div initial={{ opacity: 0, y: 30, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.2, type: 'spring', stiffness: 120 }} className="card relative overflow-hidden p-6 ring-2 ring-lime sm:p-8">
+              <span aria-hidden className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-lime/25 blur-2xl" />
+              <p className="relative text-[15px] leading-relaxed break-words whitespace-pre-line text-ink/80 [&::first-line]:font-display [&::first-line]:text-3xl [&::first-line]:text-forest">
+                {/* the guest is already on this page, so the link to it (meant for WhatsApp) is left out here */}
+                {b.confirmed_text.split('\n').filter((line) => !line.startsWith('Your booking & receipt:')).join('\n')}
+              </p>
+            </motion.div>
+          )}
           {b.status === 'pending' && b.thank_you_text && (
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card relative overflow-hidden p-6 sm:p-8">
               <span aria-hidden className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-lime/15 blur-2xl" />
