@@ -15,7 +15,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function Step({ n, title, children, done }) {
   return (
-    <Reveal as="section" className="relative sm:pl-14" amount={0.1}>
+    <Reveal as="section" id={`step-${n}`} className="relative scroll-mt-28 sm:pl-14" amount={0.1}>
       <div className="flex items-center gap-3">
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-display text-xl transition-colors duration-500 sm:absolute sm:top-0 sm:left-0 ${done ? 'bg-lime text-forest' : 'bg-forest text-cream'}`}>
           <AnimatePresence mode="wait" initial={false}>
@@ -188,23 +188,42 @@ function BookingForm() {
   const datesDone = Boolean(dates.from && dates.to);
   const detailsDone = !errors.guest_name && !errors.phone && !errors.email;
   const canSubmit = tent && datesDone && detailsDone && !submitting;
+  const missing = !tent ? 'Choose a tent' : !datesDone ? 'Select your check-in and check-out dates' : !detailsDone ? 'Fill in your name, phone and email' : null;
+
+  // Booking requests paid by UPI go to WhatsApp, where the guest sends the payment screenshot
+  const whatsappFlow = method === 'upi';
+  useEffect(() => { if (!missing && serverError?.endsWith('to continue.')) setServerError(null); }, [missing, serverError]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const blur = (k) => () => setTouched((t) => ({ ...t, [k]: true }));
 
   async function submit(e) {
     e.preventDefault();
-    setTouched({ guest_name: true, phone: true, email: true });
-    if (!canSubmit) return;
+    if (submitting) return;
+    if (missing) {
+      // Show what is left instead of a dead, greyed-out button
+      if (tent && datesDone) setTouched({ guest_name: true, phone: true, email: true });
+      setServerError(`${missing} to continue.`);
+      document.getElementById(`step-${!tent ? 1 : !datesDone ? 2 : 3}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (tent && datesDone) setTimeout(() => document.getElementById(errors.guest_name ? 'guest_name' : errors.phone ? 'phone' : 'email')?.focus({ preventScroll: true }), 500);
+      return;
+    }
     setSubmitting(true);
     setServerError(null);
+    // Open the WhatsApp tab now, inside the click, so pop-up blockers allow it; it gets its address once the booking is saved
+    const waTab = whatsappFlow ? window.open('', '_blank') : null;
     try {
       const res = await api('/bookings', {
         method: 'POST',
         body: { tent_id: tent.id, check_in: dates.from, check_out: dates.to, guests, ...form, payment_method: method }
       });
-      navigate(`/booking/${res.booking.id}?t=${res.token}`, { state: { fresh: true, whatsappUrl: res.whatsappUrl } });
+      let waOpened = false;
+      if (waTab && !waTab.closed) {
+        try { waTab.location.href = res.whatsappUrl; waOpened = true; } catch { /* tab gone */ }
+      }
+      navigate(`/booking/${res.booking.id}?t=${res.token}`, { state: { fresh: true, whatsappUrl: res.whatsappUrl, waOpened } });
     } catch (err) {
+      waTab?.close();
       setServerError(err.message);
       if (err.status === 409) {
         // someone else got there first - refresh the calendar
@@ -359,14 +378,20 @@ function BookingForm() {
             </motion.p>
           )}
         </AnimatePresence>
-        <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={!canSubmit} className="btn-primary mt-4 w-full py-4 text-base">
-          {submitting ? <Spinner /> : <CalendarDays size={18} />}
-          {submitting ? 'Sending request…' : quote ? `Request booking · ${inr(quote.total)}` : 'Request booking'}
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          type="submit"
+          disabled={submitting}
+          aria-describedby="book-hint"
+          className={`btn mt-4 w-full py-4 text-base ${whatsappFlow ? 'bg-[#25D366] text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.9)] hover:bg-[#1fb457]' : 'bg-lime text-forest hover:bg-lime-300'} ${canSubmit ? '' : 'opacity-80'}`}
+        >
+          {submitting ? <Spinner /> : whatsappFlow ? <MessageCircle size={18} /> : <CalendarDays size={18} />}
+          {submitting ? 'Sending request…' : `${whatsappFlow ? 'Book on WhatsApp' : 'Request booking'}${quote ? ` · ${inr(quote.total)}` : ''}`}
           {!submitting && <ArrowRight size={18} />}
         </motion.button>
-        {!canSubmit && !submitting && (
-          <p className="mt-2 text-center text-xs text-ink/50">{!tent ? 'Choose a tent' : !datesDone ? 'Select check-in and check-out' : 'Fill in your details'} to continue</p>
-        )}
+        <p id="book-hint" className="mt-2 text-center text-xs text-ink/50">
+          {missing ? `${missing} to continue` : whatsappFlow ? 'Your dates are held and WhatsApp opens with your booking details. Pay the advance by UPI and send the screenshot there.' : 'Your dates are held while you pay the advance online.'}
+        </p>
       </aside>
     </form>
   );

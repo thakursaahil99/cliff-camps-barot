@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
-import { Check, Copy, CreditCard, ImagePlus, QrCode, ShieldCheck, Smartphone, X } from 'lucide-react';
+import { Check, ChevronDown, Copy, CreditCard, ImagePlus, MessageCircle, QrCode, ShieldCheck, Smartphone, X } from 'lucide-react';
 import { api } from '../lib/api.js';
+import { whatsappUrl } from '../lib/site.js';
 import { inr } from '../lib/format.js';
 import { Spinner } from '../components/ui.jsx';
 
@@ -135,34 +136,50 @@ function UpiPay({ booking, upi, token, onUpdated, type }) {
         </a>
       </div>
 
-      <form onSubmit={submit} className="space-y-4 border-t border-forest/10 pt-6 md:col-span-2">
-        <p className="font-semibold text-forest">After paying, tell us the transaction ID</p>
-        <div>
-          <label htmlFor="txn" className="label">UPI transaction / reference ID (UTR)</label>
-          <input id="txn" className="field font-mono" value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="e.g. 412345678901" required minLength={6} maxLength={40} pattern="[A-Za-z0-9\-]{6,40}" autoComplete="off" />
-          <p className="mt-1 text-xs text-ink/50">Find it in your UPI app under the payment details (usually 12 digits).</p>
-        </div>
-        <div>
-          <span className="label">Screenshot <span className="font-normal text-ink/50">(optional)</span></span>
-          {shot ? (
-            <div className="relative inline-block">
-              <img src={shot} alt="Payment screenshot preview" className="h-32 rounded-xl object-cover ring-1 ring-forest/10" />
-              <button type="button" onClick={() => setShot(null)} aria-label="Remove screenshot" className="absolute -top-2 -right-2 grid h-7 w-7 place-items-center rounded-full bg-pin text-white shadow">
-                <X size={14} />
-              </button>
+      <div className="space-y-4 border-t border-forest/10 pt-6 md:col-span-2">
+        <p className="font-semibold text-forest">After paying, send us the screenshot on WhatsApp</p>
+        <a
+          href={whatsappUrl(`Hi Cliff Camps! I have paid ${inr(target.amount)} by UPI for booking ${booking.code} (${booking.guest_name}). Sending the payment screenshot here.`)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn w-full bg-[#25D366] py-4 text-base text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.9)] hover:bg-[#1fb457]"
+        >
+          <MessageCircle size={20} /> Send payment screenshot on WhatsApp
+        </a>
+        <p className="text-xs text-ink/60">We check the payment in our bank app and confirm your booking by email and WhatsApp - usually within a few hours.</p>
+        <details className="group rounded-2xl bg-cream/60 p-4 [&_summary::-webkit-details-marker]:hidden">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-forest">
+            Or enter the UPI transaction ID here instead <ChevronDown size={16} className="transition group-open:rotate-180" />
+          </summary>
+          <form onSubmit={submit} className="mt-4 space-y-4">
+            <div>
+              <label htmlFor="txn" className="label">UPI transaction / reference ID (UTR)</label>
+              <input id="txn" className="field font-mono" value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="e.g. 412345678901" required minLength={6} maxLength={40} pattern="[A-Za-z0-9\-]{6,40}" autoComplete="off" />
+              <p className="mt-1 text-xs text-ink/50">Find it in your UPI app under the payment details (usually 12 digits).</p>
             </div>
-          ) : (
-            <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-forest/20 p-4 text-sm text-ink/60 transition hover:border-lime hover:bg-lime/5">
-              <ImagePlus size={22} className="text-teal-700" /> Add payment screenshot
-              <input type="file" accept="image/*" onChange={pickFile} className="sr-only" />
-            </label>
-          )}
-        </div>
-        {error && <p role="alert" className="rounded-xl bg-pin/10 p-3 text-sm text-pin">{error}</p>}
-        <button type="submit" disabled={busy || txn.trim().length < 6} className="btn-dark w-full py-4">
-          {busy ? <Spinner /> : <Check size={18} />} {busy ? 'Submitting…' : 'I have paid - submit for verification'}
-        </button>
-      </form>
+            <div>
+              <span className="label">Screenshot <span className="font-normal text-ink/50">(optional)</span></span>
+              {shot ? (
+                <div className="relative inline-block">
+                  <img src={shot} alt="Payment screenshot preview" className="h-32 rounded-xl object-cover ring-1 ring-forest/10" />
+                  <button type="button" onClick={() => setShot(null)} aria-label="Remove screenshot" className="absolute -top-2 -right-2 grid h-7 w-7 place-items-center rounded-full bg-pin text-white shadow">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-forest/20 p-4 text-sm text-ink/60 transition hover:border-lime hover:bg-lime/5">
+                  <ImagePlus size={22} className="text-teal-700" /> Add payment screenshot
+                  <input type="file" accept="image/*" onChange={pickFile} className="sr-only" />
+                </label>
+              )}
+            </div>
+            {error && <p role="alert" className="rounded-xl bg-pin/10 p-3 text-sm text-pin">{error}</p>}
+            <button type="submit" disabled={busy || txn.trim().length < 6} className="btn-dark w-full py-4">
+              {busy ? <Spinner /> : <Check size={18} />} {busy ? 'Submitting…' : 'I have paid - submit for verification'}
+            </button>
+          </form>
+        </details>
+      </div>
     </div>
   );
 }

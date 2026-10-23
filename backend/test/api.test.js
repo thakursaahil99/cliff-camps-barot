@@ -189,6 +189,28 @@ test('UPI: guest submits txn + screenshot -> admin verifies -> booking confirmed
   assert.equal((await api('POST', `/bookings/${booking.id}/payments/upi`, { t: token, txn_id: '999999999999' })).status, 409);
 });
 
+test('WhatsApp flow: admin records the UPI advance -> confirmed + receipt; guest link for WhatsApp', async () => {
+  const created = await api('POST', '/bookings', guest({ check_in: D(60), check_out: D(62), email: 'wa@example.com' }));
+  assert.equal(created.status, 201);
+  const b = created.body.booking;
+  assert.match(decodeURIComponent(created.body.whatsappUrl), /send the payment screenshot here/);
+  const url = `/admin/bookings/${b.id}`;
+
+  assert.equal((await admin('PATCH', url, { action: 'record_payment' })).status, 400);
+  assert.equal((await admin('PATCH', url, { action: 'record_payment', amount: b.total_price + 500 })).status, 400);
+  const before = outbox().length;
+  const r = await admin('PATCH', url, { action: 'record_payment', amount: b.advance_amount, txn_id: '998877665544' });
+  assert.equal(r.status, 200, JSON.stringify(r.body));
+  assert.equal(r.body.booking.status, 'confirmed');
+  assert.equal(r.body.booking.payment_status, 'advance_paid');
+  assert.ok(outbox().length > before, 'receipt emailed');
+  // the same UTR can't be used twice
+  assert.equal((await admin('PATCH', url, { action: 'record_payment', amount: 100, txn_id: '998877665544' })).status, 409);
+
+  const detail = await admin('GET', url);
+  assert.match(detail.body.booking.guest_link, new RegExp(`/booking/${b.id}\\?t=`));
+});
+
 test('Razorpay: order -> bad signature refused -> valid signature captures; webhook is idempotent', async () => {
   const r = await api('POST', '/bookings', guest({ check_in: D(60), check_out: D(61), payment_method: 'razorpay', email: 'rzp@example.com' }));
   const b = r.body.booking;

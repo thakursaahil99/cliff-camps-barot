@@ -52,14 +52,18 @@ function validateStay(checkIn, checkOut) {
 // ------------------------------------------------------------------ guest-facing
 
 export function whatsappLink(b, tent) {
+  const advanceDue = Math.max(0, Number(b.advance_amount) - Number(b.amount_paid || 0));
   const text = [
-    `Hi Cliff Camps! I just requested a booking on your website.`,
+    `Hi Cliff Camps! I'd like to book a tent.`,
     `Ref: ${b.code}`,
     `Tent: ${tent?.name || ''}`,
     `Dates: ${b.check_in} to ${b.check_out} (${b.nights} night${b.nights > 1 ? 's' : ''})`,
     `Guests: ${b.guests}`,
-    `Total: ${inr(b.total_price)} (advance ${inr(b.advance_amount)})`,
-    `Name: ${b.guest_name}, Phone: ${b.phone}`
+    `Total: ${inr(b.total_price)}`,
+    `Name: ${b.guest_name}, Phone: ${b.phone}`,
+    ...(b.status === 'pending' && advanceDue > 0
+      ? ['', `I'll pay the advance of ${inr(advanceDue)}${config.upi.id ? ` by UPI to ${config.upi.id}` : ''} and send the payment screenshot here.`]
+      : [])
   ].join('\n');
   return `https://wa.me/${config.business.whatsapp}?text=${encodeURIComponent(text)}`;
 }
@@ -264,7 +268,7 @@ export async function applyPayments(bookingId, { sendReceipt = false } = {}) {
 
 // ------------------------------------------------------------------ admin actions
 
-export async function adminBookingAction(id, { action, admin_notes, force }) {
+export async function adminBookingAction(id, { action, admin_notes, force, ...extra }) {
   const store = db();
   const booking = await store.getBooking(id);
   if (!booking) throw notFound('Booking not found');
@@ -293,6 +297,23 @@ export async function adminBookingAction(id, { action, admin_notes, force }) {
       if (balance > 0) {
         await store.createPayment({ booking_id: id, method: 'property', amount: balance, status: 'verified', notes: 'Marked paid by admin' });
       }
+      if (Object.keys(notes).length) await store.updateBooking(id, notes);
+      if (booking.status === 'pending') await store.updateBooking(id, { status: 'confirmed' });
+      return applyPayments(id, { sendReceipt: true });
+    }
+    case 'record_payment': {
+      // UPI payment the guest sent proof of on WhatsApp / phone, checked by the admin in the bank app
+      if (booking.status === 'cancelled' && !force) throw conflict('Booking is cancelled - re-open it with force if the tent is free');
+      const amount = money(extra.amount);
+      const balance = balanceDue(booking);
+      if (!(amount > 0)) throw badRequest('Enter the amount received');
+      if (amount > balance + 1) throw badRequest(`Only ${inr(balance)} is still due on this booking`);
+      if (!force && !holdsInventory(booking) && !(await stillAvailable(booking))) {
+        throw conflict('These dates are now taken by another booking or block. Use "force" to record the payment anyway.');
+      }
+      const txnId = extra.txn_id?.trim() || null;
+      if (txnId && (await store.findPaymentByTxnId(txnId))) throw conflict('This UPI transaction ID is already recorded on a booking');
+      await store.createPayment({ booking_id: id, method: 'upi', amount, status: 'verified', txn_id: txnId, notes: 'Recorded by admin (WhatsApp / phone)' });
       if (Object.keys(notes).length) await store.updateBooking(id, notes);
       if (booking.status === 'pending') await store.updateBooking(id, { status: 'confirmed' });
       return applyPayments(id, { sendReceipt: true });

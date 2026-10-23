@@ -63,8 +63,10 @@ export const adminBookingsQuery = z.object({
 });
 
 export const bookingPatchBody = z.object({
-  action: z.enum(['confirm', 'cancel', 'mark_paid', 'refund', 'note']),
+  action: z.enum(['confirm', 'cancel', 'mark_paid', 'record_payment', 'refund', 'note']),
   admin_notes: text(2000).optional(),
+  amount: z.coerce.number().positive().max(10000000).optional(),
+  txn_id: z.union([z.literal(''), z.string().trim().regex(/^[A-Za-z0-9-]{6,40}$/, 'Enter a valid UPI transaction ID')]).optional(),
   force: z.boolean().optional()
 });
 

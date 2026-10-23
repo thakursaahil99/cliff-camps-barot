@@ -135,6 +135,14 @@ export default function BookingStatus() {
               We’ve emailed {b.email} a copy. Your dates are held until <strong>{new Date(b.hold_expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</strong> - pay the advance of {inr(b.advance_amount - b.amount_paid)} below to confirm.
             </p>
           )}
+          {b.status === 'pending' && b.payment_status === 'unpaid' && b.dates_available && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <a href={location.state?.whatsappUrl || b.whatsapp_url} target="_blank" rel="noopener noreferrer" className="btn bg-[#25D366] px-7 py-4 text-base text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.9)] hover:bg-[#1fb457]">
+                <MessageCircle size={20} /> {location.state?.waOpened ? 'Open WhatsApp again' : 'Send booking on WhatsApp'}
+              </a>
+              <p className="text-sm text-cream/70">Pay the advance with the UPI QR below, then send the screenshot on WhatsApp.</p>
+            </motion.div>
+          )}
           {b.payment_status === 'proof_submitted' && <p className="mt-4 max-w-2xl text-cream/75">Thanks! We’re checking your UPI payment. You’ll get a confirmation email with your receipt as soon as it’s verified - this page updates by itself.</p>}
           {b.status === 'confirmed' && <p className="mt-4 max-w-2xl text-cream/75">Your stay is confirmed and a receipt is in your inbox. See you by the river!</p>}
           {!b.dates_available && b.status === 'pending' && (

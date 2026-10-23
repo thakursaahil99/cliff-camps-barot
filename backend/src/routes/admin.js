@@ -7,6 +7,7 @@ import { validate } from '../middleware/validate.js';
 import * as schemas from '../schemas.js';
 import { syncAirbnbCalendar } from '../services/airbnbSync.js';
 import { adminBookingAction, adminPaymentAction, publicBooking } from '../services/bookings.js';
+import { bookingLink } from '../services/emails.js';
 import { addDays, eachNight } from '../utils/dates.js';
 import { ah, badRequest, HttpError, notFound } from '../utils/http.js';
 import { config } from '../config.js';
@@ -46,7 +47,7 @@ r.get('/bookings/:id', validate(schemas.idParam, 'params'), ah(async (req, res) 
   const booking = await db().getBooking(req.params.id);
   if (!booking) throw notFound('Booking not found');
   const payments = await db().listPayments({ booking_id: booking.id });
-  res.json({ booking: { ...booking, ...(await publicBooking(booking, null, payments)), admin_notes: booking.admin_notes }, payments });
+  res.json({ booking: { ...booking, ...(await publicBooking(booking, null, payments)), admin_notes: booking.admin_notes, guest_link: bookingLink(booking) }, payments });
 }));
 
 r.patch('/bookings/:id', validate(schemas.idParam, 'params'), validate(schemas.bookingPatchBody), ah(async (req, res) => {

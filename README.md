@@ -72,7 +72,8 @@ Emails sent: booking request (guest), new booking alert (`cliffcampsbarot@gmail.
 ## Booking flow
 
 1. Guest picks a tent, dates (booked nights greyed out) and guests, and sees the price live (nights × rate, optional `TAX_PERCENT`).
-2. **Request booking** creates a `pending` booking. The server re-checks availability and re-computes the price; two people can never book the last tent, because the check and insert happen together in one locked database transaction.
+2. **Book on WhatsApp** (UPI) creates a `pending` booking and opens WhatsApp with the booking details, advance and UPI ID. The guest pays with the QR on their booking page and sends the screenshot on WhatsApp. The admin checks the money in the bank/UPI app, then in Admin → booking → **Advance received** records the amount (+ UTR), which confirms the booking and emails the receipt; **Send confirmation on WhatsApp** then opens the guest's chat with a ready confirmation message. (With Razorpay chosen, the button is **Request booking**.)
+   The booking itself: The server re-checks availability and re-computes the price; two people can never book the last tent, because the check and insert happen together in one locked database transaction.
 3. The guest lands on their private booking page (link also emailed), with a prefilled WhatsApp message.
 4. Pending, unpaid bookings hold the dates for `PENDING_HOLD_HOURS` (24h), then free them automatically.
 

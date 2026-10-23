@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Ban, CalendarDays, Check, CircleCheck, Copy, Eye, LogOut, Plus, RefreshCw, Save, Search, Tent, Trash2, Wallet, X } from 'lucide-react';
+import { Ban, CalendarDays, Check, CircleCheck, Copy, Eye, LogOut, MessageCircle, Plus, RefreshCw, Save, Search, Tent, Trash2, Wallet, X } from 'lucide-react';
 import { api, adminToken, qs } from '../../lib/api.js';
 import { inr, prettyDate, toISO } from '../../lib/format.js';
 import { Logo, Seo, Spinner, StatusPill } from '../../components/ui.jsx';
@@ -50,6 +50,58 @@ function Toast({ toast }) {
 }
 
 // ------------------------------------------------------------------ bookings
+/** wa.me link to the guest's own number, with a confirmation (or follow-up) message ready to send. */
+function guestWhatsapp(b) {
+  const digits = b.phone.replace(/\D/g, '');
+  const number = digits.length === 10 ? `91${digits}` : digits.replace(/^0+/, '');
+  const stay = `${prettyDate(b.check_in, { year: 'numeric' })} to ${prettyDate(b.check_out, { year: 'numeric' })} (${b.nights} night${b.nights > 1 ? 's' : ''})`;
+  const text = b.status === 'confirmed'
+    ? [
+        `Hi ${b.guest_name}! Your booking at Cliff Camps, Barot is confirmed ✅`,
+        `Ref: ${b.code}`,
+        `Tent: ${b.tent?.name || ''} · ${b.guests} guest${b.guests > 1 ? 's' : ''}`,
+        `Dates: ${stay}`,
+        `Paid: ${inr(b.amount_paid)} · Balance at the camp: ${inr(b.balance_due)}`,
+        `Your booking & receipt: ${b.guest_link}`,
+        '',
+        'See you by the river!'
+      ]
+    : [`Hi ${b.guest_name}, this is Cliff Camps, Barot about your booking ${b.code} (${stay}).`, `Your booking page: ${b.guest_link}`];
+  return `https://wa.me/${number}?text=${encodeURIComponent(text.join('\n'))}`;
+}
+
+/** UPI payment the guest sent a screenshot of on WhatsApp - check it in the bank app first, then record it here. */
+function RecordPayment({ booking, busy, onRecord }) {
+  const due = booking.amount_paid > 0 ? booking.balance_due : Math.min(booking.advance_amount, booking.balance_due);
+  const [amount, setAmount] = useState(String(due));
+  const [txn, setTxn] = useState('');
+  useEffect(() => { setAmount(String(due)); setTxn(''); }, [due]);
+  const submit = (e) => {
+    e.preventDefault();
+    if (!window.confirm(`Have you checked in your bank / UPI app that ${inr(Number(amount))} has arrived?\n\nThe booking will be confirmed and the guest emailed a receipt.`)) return;
+    onRecord({ amount: Number(amount), txn_id: txn.trim() });
+  };
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-lime/40">
+      <p className="font-semibold text-forest">Payment received on WhatsApp / UPI</p>
+      <p className="text-xs text-ink/60">Screenshots can be faked - first check that the money is in your bank or UPI app, and match the UTR.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <label htmlFor="rp-amount" className="label">Amount (₹)</label>
+          <input id="rp-amount" type="number" min={1} max={booking.balance_due} step="1" required className="field" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        </div>
+        <div>
+          <label htmlFor="rp-txn" className="label">UTR <span className="font-normal text-ink/50">(optional)</span></label>
+          <input id="rp-txn" className="field font-mono" value={txn} onChange={(e) => setTxn(e.target.value)} placeholder="412345678901" minLength={6} maxLength={40} pattern="[A-Za-z0-9\-]{6,40}" autoComplete="off" />
+        </div>
+      </div>
+      <button type="submit" disabled={!!busy || !(Number(amount) > 0)} className="btn-primary w-full">
+        {busy === 'record_payment' ? <Spinner /> : <CircleCheck size={16} />} {booking.amount_paid > 0 ? 'Balance received' : 'Advance received'} - confirm booking
+      </button>
+    </form>
+  );
+}
+
 function BookingDrawer({ id, onClose, onChanged, notify }) {
   const { data, loading, reload } = useAdmin(`/admin/bookings/${id}`);
   const [notes, setNotes] = useState('');
@@ -62,7 +114,7 @@ function BookingDrawer({ id, onClose, onChanged, notify }) {
     setBusy(action);
     try {
       await api(`/admin/bookings/${id}`, { method: 'PATCH', admin: true, body: { action, ...extra } });
-      notify(action === 'note' ? 'Notes saved' : `Booking ${action.replace('_', ' ')} done`);
+      notify(action === 'note' ? 'Notes saved' : action === 'record_payment' ? 'Payment recorded - booking confirmed and receipt emailed' : `Booking ${action.replace('_', ' ')} done`);
       reload();
       onChanged();
     } catch (err) {
@@ -128,6 +180,12 @@ function BookingDrawer({ id, onClose, onChanged, notify }) {
               <button type="button" disabled={!!busy || b.status === 'cancelled'} onClick={() => act('cancel')} className="btn-outline">{busy === 'cancel' ? <Spinner /> : <Ban size={16} />} Cancel</button>
               <button type="button" disabled={!!busy || b.amount_paid <= 0 || b.payment_status === 'refunded'} onClick={() => act('refund')} className="btn-outline">{busy === 'refund' ? <Spinner /> : <RefreshCw size={16} />} Refunded</button>
             </div>
+
+            {b.status !== 'cancelled' && b.balance_due > 0 && <RecordPayment booking={b} busy={busy} onRecord={(body) => act('record_payment', body)} />}
+
+            <a href={guestWhatsapp(b)} target="_blank" rel="noopener noreferrer" className="btn w-full bg-[#25D366] text-white hover:bg-[#1fb457]">
+              <MessageCircle size={16} /> {b.status === 'confirmed' ? 'Send confirmation on WhatsApp' : 'Message guest on WhatsApp'}
+            </a>
 
             <div>
               <label htmlFor="admin-notes" className="label">Admin notes (private)</label>
