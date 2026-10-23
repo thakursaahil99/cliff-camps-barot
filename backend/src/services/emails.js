@@ -139,23 +139,66 @@ export function adminPaymentSubmittedEmail(b, p) {
 }
 
 /** Confirmation + receipt (HTML receipt, printable from any mail client). */
+const sectionTitle = (t) => `<h2 style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:${C.lime};margin:26px 0 6px">${t}</h2>`;
+const detailRows = (rows) =>
+  `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse">${rows
+    .map(([k, v]) => `<tr><td style="padding:9px 0;color:#5b6b60;border-bottom:1px solid #eef0ea;vertical-align:top;width:42%">${k}</td><td style="padding:9px 0;text-align:right;border-bottom:1px solid #eef0ea">${v}</td></tr>`)
+    .join('')}</table>`;
+
+/** "Booking successful" email sent to the guest the moment the camp confirms: every detail they sent us, payment, and how to reach us. */
 export function receiptEmail(b, tent, payments) {
   const paid = payments.filter((p) => ['verified', 'captured'].includes(p.status));
-  const subject = `Booking confirmed & payment receipt - ${b.code} | Cliff Camps, Barot`;
+  const amountPaid = Number(b.amount_paid || 0);
+  const subject = `✅ Booking confirmed - ${b.code} | Cliff Camps Barot`;
   const html = layout(subject, `
-    <div style="display:inline-block;background:${C.lime};color:#fff;font-size:12px;font-weight:700;letter-spacing:1px;padding:4px 12px;border-radius:999px">CONFIRMED</div>
-    <h1 style="margin:12px 0 8px;font-size:22px;color:${C.forest}">See you by the river, ${esc(b.guest_name)}!</h1>
-    <p style="margin:0 0 12px;line-height:1.6">Your stay at Cliff Camps, Barot is confirmed. This email is your payment receipt.</p>
-    ${summaryTable(b, tent)}
-    <h2 style="font-size:16px;color:${C.forest};margin:20px 0 4px">Receipt</h2>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse">
-      <tr style="color:#5b6b60;font-size:12px;text-transform:uppercase"><td style="padding:6px 0">Date</td><td>Method</td><td>Reference</td><td style="text-align:right">Amount</td></tr>
-      ${paid.map((p) => `<tr><td style="padding:6px 0;border-top:1px solid #eef0ea">${new Date(p.updated_at || p.created_at).toLocaleDateString('en-IN')}</td><td style="border-top:1px solid #eef0ea">${METHOD_LABEL[p.method] || p.method}</td><td style="border-top:1px solid #eef0ea;font-family:monospace;font-size:12px">${esc(p.txn_id || p.provider_payment_id || '-')}</td><td style="text-align:right;border-top:1px solid #eef0ea">${inr(p.amount)}</td></tr>`).join('')}
-      <tr><td colspan="3" style="padding:10px 0;border-top:2px solid ${C.forest};font-weight:700">Total paid</td><td style="text-align:right;border-top:2px solid ${C.forest};font-weight:700">${inr(b.amount_paid)}</td></tr>
-      <tr><td colspan="3" style="padding:4px 0;color:#5b6b60">Balance (pay at property)</td><td style="text-align:right;color:#5b6b60">${inr(balanceDue(b))}</td></tr>
-    </table>
-    <p style="text-align:center;margin-top:20px">${button(bookingLink(b), 'View booking')}</p>
-    <p style="font-size:13px;color:#5b6b60;line-height:1.6">Find us at ${esc(B.address)}. Call ${B.phones[0].number} (${B.phones[0].name}) when you reach Barot.</p>`);
+    <div style="display:none;max-height:0;overflow:hidden">Your stay at Cliff Camps Barot is confirmed - ${formatDate(b.check_in)} to ${formatDate(b.check_out)}.</div>
+    <div style="background:${C.lime};border-radius:14px;padding:18px 20px;text-align:center;color:#fff">
+      <div style="font-size:30px;line-height:1">✅</div>
+      <div style="font-size:20px;font-weight:700;margin-top:6px">Your booking is successful!</div>
+      <div style="font-size:13px;opacity:.9;margin-top:4px">Booking ref <strong>${esc(b.code)}</strong></div>
+    </div>
+    <h1 style="margin:22px 0 8px;font-size:20px;color:${C.forest}">Dear ${esc(b.guest_name)},</h1>
+    <p style="margin:0 0 6px;line-height:1.7">Thank you for choosing Cliff Camps Barot! 🏕️ Your booking is <strong>confirmed</strong>. Here are all the details of your booking - please keep this email for your stay.</p>
+
+    ${sectionTitle('Your stay')}
+    ${detailRows([
+      ['Tent', `<strong>${esc(tent?.name || '')}</strong>`],
+      ['Check-in', `<strong>${formatDate(b.check_in)}</strong>`],
+      ['Check-out', `<strong>${formatDate(b.check_out)}</strong>`],
+      ['Nights', b.nights],
+      ['Guests', b.guests]
+    ])}
+
+    ${sectionTitle('Your details')}
+    ${detailRows([
+      ['Name', esc(b.guest_name)],
+      ['Phone / WhatsApp', esc(b.phone)],
+      ['Email', esc(b.email)],
+      ...(b.notes ? [['Special requests', esc(b.notes)]] : [])
+    ])}
+
+    ${sectionTitle('Payment')}
+    ${detailRows([
+      ['Total', `<strong>${inr(b.total_price)}</strong>${Number(b.tax_amount) > 0 ? ` <span style="color:#777">(incl. ${inr(b.tax_amount)} tax)</span>` : ''}`],
+      ...paid.map((p) => [
+        `Paid on ${new Date(p.updated_at || p.created_at).toLocaleDateString('en-IN')} · ${METHOD_LABEL[p.method] || p.method}${p.txn_id || p.provider_payment_id ? `<br><span style="font-family:monospace;font-size:12px">${esc(p.txn_id || p.provider_payment_id)}</span>` : ''}`,
+        inr(p.amount)
+      ]),
+      ['Total paid', `<strong style="color:${C.lime}">${inr(amountPaid)}</strong>`],
+      ['Balance (pay at the camp)', `<strong>${inr(balanceDue(b))}</strong>`]
+    ])}
+
+    ${sectionTitle('Getting there')}
+    <p style="margin:0;line-height:1.7">📍 <strong>${esc(B.address)}</strong>, Barot Valley, Himachal Pradesh</p>
+    <p style="margin:6px 0 0;line-height:1.7">When you reach Barot, call <a href="tel:+91${B.phones[0].number}" style="color:${C.teal}">${B.phones[0].number}</a> (${B.phones[0].name}) or <a href="tel:+91${B.phones[1].number}" style="color:${C.teal}">${B.phones[1].number}</a> (${B.phones[1].name}).</p>
+    <p style="text-align:center;margin:18px 0 4px">
+      ${button(B.mapLink, '📍 Open in Google Maps', C.forest)}
+      ${button(`https://api.whatsapp.com/send?phone=${B.whatsapp}&text=${encodeURIComponent(`Hi Cliff Camps! About my booking ${b.code}.`)}`, 'WhatsApp us', '#25D366')}
+    </p>
+    <p style="text-align:center;margin:0 0 6px">${button(bookingLink(b), 'View your booking online')}</p>
+
+    <p style="margin:24px 0 0;line-height:1.7">✨ Get ready to experience the peaceful beauty of Barot Valley, riverside camping, delicious food, and unforgettable mountain vibes!</p>
+    <p style="margin:14px 0 0;line-height:1.6">See you by the river!<br><strong style="color:${C.forest}">Cliff Camps Barot</strong><br><span style="color:#5b6b60">Where Mountains Meet Peace. ❤️</span></p>`);
   return { subject, html };
 }
 

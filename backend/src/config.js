@@ -50,7 +50,8 @@ export const config = {
     whatsapp: '918219850117',
     address: 'Old Hatchery, Barot - Lohardi Road',
     instagram: 'https://www.instagram.com/cliff_camps_117',
-    airbnb: 'https://www.airbnb.co.in/rooms/1426016597402048000'
+    airbnb: 'https://www.airbnb.co.in/rooms/1426016597402048000',
+    mapLink: 'https://maps.google.com/?cid=12454268022606769819'
   },
   adminNotifyEmail: str(process.env.ADMIN_NOTIFY_EMAIL, 'cliffcampsbarot@gmail.com'),
 
