@@ -181,9 +181,9 @@ function BookingForm() {
   }, [tent, dates, config]);
 
   const errors = {
-    guest_name: form.guest_name.trim().length < 2 && 'Please enter your name',
-    phone: !PHONE_RE.test(form.phone.trim()) && 'Enter a valid phone number',
-    email: !EMAIL_RE.test(form.email.trim()) && 'Enter a valid email'
+    guest_name: form.guest_name.trim().length < 2 && 'Name is required',
+    phone: !form.phone.trim() ? 'Phone / WhatsApp number is required' : !PHONE_RE.test(form.phone.trim()) && 'Enter a valid phone number',
+    email: !form.email.trim() ? 'Email is required' : !EMAIL_RE.test(form.email.trim()) && 'Enter a valid email'
   };
   const datesDone = Boolean(dates.from && dates.to);
   const detailsDone = !errors.guest_name && !errors.phone && !errors.email;
@@ -309,20 +309,21 @@ function BookingForm() {
         </Step>
 
         <Step n={3} title="Your details" done={detailsDone}>
+          <p className="-mt-2 mb-4 text-sm text-ink/60">Name, phone and email are required <span className="text-pin">*</span> - we confirm your booking on WhatsApp and email.</p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label htmlFor="guest_name" className="label">Full name</label>
-              <input id="guest_name" className="field" autoComplete="name" value={form.guest_name} onChange={set('guest_name')} onBlur={blur('guest_name')} aria-invalid={Boolean(fieldErr('guest_name'))} aria-describedby="err-name" />
+              <label htmlFor="guest_name" className="label">Full name<span className="text-pin" aria-hidden> *</span></label>
+              <input id="guest_name" required aria-required="true" className="field" autoComplete="name" value={form.guest_name} onChange={set('guest_name')} onBlur={blur('guest_name')} aria-invalid={Boolean(fieldErr('guest_name'))} aria-describedby="err-name" />
               {fieldErr('guest_name') && <p id="err-name" className="mt-1 text-sm text-pin">{errors.guest_name}</p>}
             </div>
             <div>
-              <label htmlFor="phone" className="label">Phone / WhatsApp</label>
-              <input id="phone" className="field" type="tel" inputMode="tel" autoComplete="tel" placeholder="98765 43210" value={form.phone} onChange={set('phone')} onBlur={blur('phone')} aria-invalid={Boolean(fieldErr('phone'))} aria-describedby="err-phone" />
+              <label htmlFor="phone" className="label">Phone / WhatsApp<span className="text-pin" aria-hidden> *</span></label>
+              <input id="phone" required aria-required="true" className="field" type="tel" inputMode="tel" autoComplete="tel" placeholder="98765 43210" value={form.phone} onChange={set('phone')} onBlur={blur('phone')} aria-invalid={Boolean(fieldErr('phone'))} aria-describedby="err-phone" />
               {fieldErr('phone') && <p id="err-phone" className="mt-1 text-sm text-pin">{errors.phone}</p>}
             </div>
             <div>
-              <label htmlFor="email" className="label">Email</label>
-              <input id="email" className="field" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={set('email')} onBlur={blur('email')} aria-invalid={Boolean(fieldErr('email'))} aria-describedby="err-email" />
+              <label htmlFor="email" className="label">Email<span className="text-pin" aria-hidden> *</span></label>
+              <input id="email" required aria-required="true" className="field" type="email" inputMode="email" autoComplete="email" value={form.email} onChange={set('email')} onBlur={blur('email')} aria-invalid={Boolean(fieldErr('email'))} aria-describedby="err-email" />
               {fieldErr('email') && <p id="err-email" className="mt-1 text-sm text-pin">{errors.email}</p>}
             </div>
             <div className="sm:col-span-2">
