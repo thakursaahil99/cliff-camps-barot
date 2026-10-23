@@ -83,7 +83,7 @@ test('health, config, tents', async () => {
   assert.equal(JSON.stringify(c.body).includes('rzp_secret'), false, 'secrets must never reach the browser');
   const t = await api('GET', '/tents');
   tents = t.body.tents;
-  assert.equal(tents.length, 2);
+  assert.equal(tents.length, 1);
 });
 
 test('validation and CORS', async () => {
@@ -136,12 +136,13 @@ test('double booking is prevented, including under concurrent requests', async (
   // Check-out day of a full stay is bookable as a check-in
   assert.equal((await api('POST', '/bookings', guest({ check_in: D(12), check_out: D(13), email: 'next@example.com' }))).status, 201);
 
-  // Family tent: 2 units, fire 6 requests at once -> exactly 2 succeed
-  const family = tents.find((t) => t.name === 'Family Swiss Tent').id;
+  // 4 units, fire 6 requests at once -> exactly 4 succeed
   const results = await Promise.all(
-    Array.from({ length: 6 }, (_, i) => api('POST', '/bookings', guest({ tent_id: family, guests: 4, check_in: D(40), check_out: D(43), email: `c${i}@example.com` })))
+    Array.from({ length: 6 }, (_, i) => api('POST', '/bookings', guest({ guests: 3, check_in: D(40), check_out: D(43), email: `c${i}@example.com` })))
   );
-  assert.deepEqual(results.map((r) => r.status).sort(), [201, 201, 409, 409, 409, 409]);
+  assert.deepEqual(results.map((r) => r.status).sort(), [201, 201, 201, 201, 409, 409]);
+  // A 4th guest is more than the tent sleeps
+  assert.equal((await api('POST', '/bookings', guest({ guests: 4, check_in: D(50), check_out: D(51), email: 'big@example.com' }))).status, 400);
 });
 
 test('admin auth', async () => {
@@ -257,7 +258,7 @@ test('Netlify function wrapper serves the same API', async () => {
   const { handler } = await import('../netlify/functions/api.js');
   const res = await handler({ path: '/.netlify/functions/api/tents', httpMethod: 'GET', headers: {}, queryStringParameters: {}, body: null, isBase64Encoded: false }, {});
   assert.equal(res.statusCode, 200);
-  assert.equal(JSON.parse(res.body).tents.length, 2);
+  assert.equal(JSON.parse(res.body).tents.length, 1);
   const event = JSON.stringify({ event: 'payment.authorized', payload: { payment: { entity: {} } } });
   const hook = await handler({ path: '/api/webhooks/razorpay', httpMethod: 'POST', headers: { 'content-type': 'application/json', 'x-razorpay-signature': crypto.createHmac('sha256', 'whsec').update(event).digest('hex') }, body: event, isBase64Encoded: false }, {});
   assert.equal(hook.statusCode, 200, hook.body);
