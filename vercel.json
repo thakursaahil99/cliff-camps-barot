@@ -10,7 +10,7 @@
   "crons": [{ "path": "/api/ical-sync", "schedule": "0 3 * * *" }],
   "rewrites": [
     { "source": "/api/ical-sync", "destination": "/api/ical-sync" },
-    { "source": "/api/:path*", "destination": "/api?__path=:path*" },
+    { "source": "/api/:__path*", "destination": "/api?__path=:__path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
