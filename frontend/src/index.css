@@ -1,0 +1,172 @@
+@import 'tailwindcss';
+
+/* Palette taken from the Cliff Camps logo */
+@theme {
+  --color-forest: #0b2a1e;
+  --color-forest-950: #06180f;
+  --color-forest-800: #10382a;
+  --color-forest-700: #174634;
+  --color-forest-600: #22573f;
+  --color-lime: #7cb342;
+  --color-lime-300: #a5d46f;
+  --color-lime-700: #4f7a22;
+  --color-cream: #f5f1e3;
+  --color-cream-200: #ebe5cf;
+  --color-cream-300: #ddd5b8;
+  --color-teal: #2a9db5;
+  --color-teal-700: #1b6f81;
+  --color-sun: #f5a623;
+  --color-sun-600: #d98a0b;
+  --color-pin: #e53935;
+  --color-ink: #1d2a22;
+
+  --font-display: 'Bebas Neue', 'Oswald', Impact, sans-serif;
+  --font-script: 'Caveat Brush', 'Pacifico', cursive;
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --shadow-glow: 0 0 0 1px rgb(124 179 66 / 0.25), 0 20px 50px -20px rgb(124 179 66 / 0.45);
+
+  --animate-marquee: marquee var(--marquee-duration, 45s) linear infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-ping-slow: ping 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-shimmer: shimmer 3.5s linear infinite;
+
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(var(--float-rot, 0deg)); }
+    50% { transform: translateY(-14px) rotate(calc(var(--float-rot, 0deg) * -1)); }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-cream font-sans text-ink antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3 {
+    @apply font-display tracking-wide;
+    text-wrap: balance;
+  }
+  p { text-wrap: pretty; }
+  ::selection { @apply bg-lime text-forest; }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-sun;
+  }
+  img { @apply select-none; }
+}
+
+@utility btn {
+  @apply relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full px-6 py-3 text-sm font-semibold tracking-wide transition-[background-color,color,box-shadow,transform] duration-300 select-none disabled:cursor-not-allowed disabled:opacity-60;
+}
+
+@layer components {
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .btn-primary {
+    @apply btn bg-lime text-forest shadow-[0_10px_30px_-10px_rgb(124_179_66/0.8)] hover:bg-lime-300;
+  }
+  .btn-sun {
+    @apply btn bg-sun text-forest shadow-[0_10px_30px_-10px_rgb(245_166_35/0.8)] hover:bg-[#ffbb45];
+  }
+  .btn-ghost {
+    @apply btn border border-cream/40 text-cream backdrop-blur hover:border-cream hover:bg-cream/10;
+  }
+  .btn-dark {
+    @apply btn bg-forest text-cream hover:bg-forest-700;
+  }
+  .btn-outline {
+    @apply btn border border-forest/20 text-forest hover:border-forest hover:bg-forest hover:text-cream;
+  }
+  .eyebrow {
+    @apply font-script text-xl text-lime sm:text-2xl;
+  }
+  .field {
+    @apply w-full rounded-xl border border-forest/15 bg-white px-4 py-3 text-ink shadow-sm transition placeholder:text-ink/40 focus:border-lime focus:ring-4 focus:ring-lime/20 focus:outline-none;
+  }
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-forest;
+  }
+  .card {
+    @apply rounded-3xl border border-forest/10 bg-white shadow-[0_20px_60px_-30px_rgb(11_42_30/0.35)];
+  }
+  .link {
+    @apply font-medium text-teal-700 underline decoration-teal/40 underline-offset-4 transition hover:text-teal hover:decoration-teal;
+  }
+  .grain::after {
+    content: '';
+    @apply pointer-events-none absolute inset-0 opacity-[0.07] mix-blend-overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .text-gradient-sun {
+    @apply bg-gradient-to-r from-sun via-[#ffd27a] to-lime-300 bg-clip-text text-transparent;
+    background-size: 200% auto;
+  }
+  .shimmer {
+    @apply animate-shimmer;
+    background-image: linear-gradient(110deg, transparent 30%, rgb(255 255 255 / 0.35) 50%, transparent 70%);
+    background-size: 200% 100%;
+  }
+}
+
+/* ---------- react-day-picker v9, themed to the palette ---------- */
+.rdp-root {
+  --rdp-accent-color: var(--color-lime-700);
+  --rdp-accent-background-color: color-mix(in srgb, var(--color-lime) 22%, white);
+  --rdp-range_middle-background-color: color-mix(in srgb, var(--color-lime) 22%, white);
+  --rdp-range_middle-color: var(--color-forest);
+  --rdp-range_start-date-background-color: var(--color-forest);
+  --rdp-range_end-date-background-color: var(--color-forest);
+  --rdp-range_start-color: var(--color-cream);
+  --rdp-range_end-color: var(--color-cream);
+  --rdp-today-color: var(--color-teal-700);
+  --rdp-day-height: 42px;
+  --rdp-day-width: 42px;
+  --rdp-day_button-height: 40px;
+  --rdp-day_button-width: 40px;
+  --rdp-selected-border: 2px solid var(--color-forest);
+  --rdp-disabled-opacity: 1;
+  font-size: 0.95rem;
+}
+.rdp-months { gap: 2rem; justify-content: center; }
+.rdp-month_caption { font-family: var(--font-display); font-size: 1.4rem; letter-spacing: 0.04em; color: var(--color-forest); }
+.rdp-weekday { color: color-mix(in srgb, var(--color-forest) 60%, transparent); font-size: 0.75rem; text-transform: uppercase; }
+.rdp-day_button { border-radius: 999px; transition: background-color 0.2s, transform 0.2s; }
+.rdp-day:not(.rdp-disabled):not(.rdp-selected) .rdp-day_button:hover { background: color-mix(in srgb, var(--color-lime) 25%, white); transform: scale(1.06); }
+.rdp-disabled .rdp-day_button { color: #a9aea8; cursor: not-allowed; }
+.rdp-day.cc-booked .rdp-day_button {
+  color: #b5b9b3;
+  text-decoration: line-through;
+  background: repeating-linear-gradient(135deg, #eef0ea 0 4px, #f8f8f5 4px 8px);
+}
+.rdp-root .rdp-chevron { fill: var(--color-forest); }
+.rdp-root .rdp-today:not(.rdp-range_start):not(.rdp-range_end) .rdp-day_button { color: var(--color-teal-700); font-weight: 700; }
+.rdp-root .rdp-range_start .rdp-day_button,
+.rdp-root .rdp-range_end .rdp-day_button {
+  background: var(--color-forest);
+  border-color: var(--color-forest);
+  color: var(--color-cream);
+  font-weight: 700;
+}
+.rdp-root .rdp-range_middle { background: color-mix(in srgb, var(--color-lime) 22%, white); }
+.rdp-root .rdp-range_middle .rdp-day_button { border-color: transparent; color: var(--color-forest); }
+@media (max-width: 380px) {
+  .rdp-root { --rdp-day-height: 38px; --rdp-day-width: 38px; --rdp-day_button-height: 36px; --rdp-day_button-width: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-marquee, .animate-float, .animate-shimmer, .animate-ping-slow { animation: none !important; }
+}
