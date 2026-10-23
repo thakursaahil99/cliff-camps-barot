@@ -8,9 +8,10 @@ const num = (v, d) => {
 const bool = (v, d = false) => (v === undefined || v === '' ? d : ['1', 'true', 'yes', 'on'].includes(String(v).toLowerCase()));
 
 const env = str(process.env.NODE_ENV, 'development');
-const isProd = env === 'production' || Boolean(process.env.NETLIFY) || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
+const isProd = env === 'production' || Boolean(process.env.NETLIFY) || Boolean(process.env.VERCEL) || Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-const siteUrl = str(process.env.SITE_URL || process.env.URL, 'http://localhost:5173').replace(/\/$/, '');
+const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : '';
+const siteUrl = str(process.env.SITE_URL || process.env.URL || vercelUrl, 'http://localhost:5173').replace(/\/$/, '');
 
 let jwtSecret = str(process.env.JWT_SECRET);
 if (!jwtSecret) {
