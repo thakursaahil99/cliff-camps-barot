@@ -10,7 +10,36 @@ const B = config.business;
 export const bookingLink = (b) => `${config.siteUrl}/booking/${b.id}?t=${bookingToken(b.id)}`;
 const adminLink = (b) => `${config.siteUrl}/admin?booking=${b.id}`;
 
-const METHOD_LABEL = { upi: 'UPI', razorpay: 'Razorpay (online)', property: 'Paid at property' };
+/** Guest's phone as a wa.me number: 10-digit Indian numbers get the 91 prefix. */
+export const waNumber = (phone) => {
+  const digits = String(phone || '').replace(/\D/g, '').replace(/^0+/, '');
+  return digits.length === 10 ? `91${digits}` : digits;
+};
+
+/** Thank-you message for the guest after a booking request (camp's own wording). Shown on the site and sent on WhatsApp. */
+export function thankYouText(b) {
+  return [
+    '🙏 Thank You for Choosing Cliff Camps Barot! 🏕️',
+    '',
+    `Dear ${b.guest_name || 'Guest'},`,
+    '',
+    'Thank you for submitting your booking details with Cliff Camps Barot. 🌿',
+    `Booking ref: ${b.code} (${formatDate(b.check_in)} to ${formatDate(b.check_out)})`,
+    '',
+    'We have received your information and our team will contact you shortly to confirm your booking and share the payment details.',
+    '',
+    '✨ Get ready to experience the peaceful beauty of Barot Valley, riverside camping, delicious food, and unforgettable mountain vibes!',
+    '',
+    '📍 Location: Barot Valley, Himachal Pradesh',
+    '',
+    'Cliff Camps Barot',
+    'Where Mountains Meet Peace. ❤️'
+  ].join('\n');
+}
+
+export const thankYouWhatsappLink = (b) => `https://wa.me/${waNumber(b.phone)}?text=${encodeURIComponent(thankYouText(b))}`;
+
+const METHOD_LABEL ={ upi: 'UPI', razorpay: 'Razorpay (online)', property: 'Paid at property' };
 
 function layout(title, body) {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>${esc(title)}</title></head>
@@ -67,10 +96,11 @@ export function adminNewBookingEmail(b, tent) {
     <h1 style="margin:0 0 8px;font-size:20px;color:${C.forest}">New booking request</h1>
     ${summaryTable(b, tent)}
     <p style="font-size:14px;line-height:1.7"><strong>Guest:</strong> ${esc(b.guest_name)}<br>
-    <strong>Phone:</strong> <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a> &middot; <a href="https://wa.me/${esc(b.phone.replace(/\D/g, '').replace(/^(\d{10})$/, '91$1'))}">WhatsApp</a><br>
+    <strong>Phone:</strong> <a href="tel:${esc(b.phone)}">${esc(b.phone)}</a> &middot; <a href="https://wa.me/${esc(waNumber(b.phone))}">WhatsApp</a><br>
     <strong>Email:</strong> ${esc(b.email)}<br>
     <strong>Preferred payment:</strong> ${esc(METHOD_LABEL[b.payment_method] || '-')}<br>
     ${b.notes ? `<strong>Special requests:</strong> ${esc(b.notes)}` : ''}</p>
+    <p style="text-align:center">${button(thankYouWhatsappLink(b), 'Send thank-you to guest on WhatsApp', '#25D366')}</p>
     <p style="text-align:center">${button(adminLink(b), 'Open in admin panel', C.forest)}</p>`);
   return { subject, html };
 }

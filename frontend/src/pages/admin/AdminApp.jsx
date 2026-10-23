@@ -66,7 +66,9 @@ function guestWhatsapp(b) {
         '',
         'See you by the river!'
       ]
-    : [`Hi ${b.guest_name}, this is Cliff Camps, Barot about your booking ${b.code} (${stay}).`, `Your booking page: ${b.guest_link}`];
+    : b.status === 'pending' && b.thank_you_text
+      ? [b.thank_you_text]
+      : [`Hi ${b.guest_name}, this is Cliff Camps, Barot about your booking ${b.code} (${stay}).`, `Your booking page: ${b.guest_link}`];
   return `https://wa.me/${number}?text=${encodeURIComponent(text.join('\n'))}`;
 }
 
@@ -184,7 +186,7 @@ function BookingDrawer({ id, onClose, onChanged, notify }) {
             {b.status !== 'cancelled' && b.balance_due > 0 && <RecordPayment booking={b} busy={busy} onRecord={(body) => act('record_payment', body)} />}
 
             <a href={guestWhatsapp(b)} target="_blank" rel="noopener noreferrer" className="btn w-full bg-[#25D366] text-white hover:bg-[#1fb457]">
-              <MessageCircle size={16} /> {b.status === 'confirmed' ? 'Send confirmation on WhatsApp' : 'Message guest on WhatsApp'}
+              <MessageCircle size={16} /> {b.status === 'confirmed' ? 'Send confirmation on WhatsApp' : b.status === 'pending' ? 'Send thank-you on WhatsApp' : 'Message guest on WhatsApp'}
             </a>
 
             <div>

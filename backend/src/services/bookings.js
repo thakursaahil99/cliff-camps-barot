@@ -7,7 +7,7 @@ import { bookingCode, bookingToken } from '../utils/tokens.js';
 import { holdsInventory, unavailableNights } from './availability.js';
 import { buildIcs, toRanges } from './ical.js';
 import { sendMail } from './mailer.js';
-import { adminNewBookingEmail, adminPaymentSubmittedEmail, bookingLink, guestCancelledEmail, guestRequestEmail, receiptEmail } from './emails.js';
+import { adminNewBookingEmail, adminPaymentSubmittedEmail, bookingLink, guestCancelledEmail, guestRequestEmail, receiptEmail, thankYouText } from './emails.js';
 import { balanceDue, inr, quote } from './pricing.js';
 
 const PAID = ['verified', 'captured'];
@@ -147,6 +147,7 @@ export async function publicBooking(b, tent, payments) {
     // An unpaid request whose hold lapsed may have lost its dates - the page then asks the guest to contact us
     dates_available: open && !holdsInventory(b) ? await stillAvailable(b) : true,
     whatsapp_url: whatsappLink(b, tent),
+    thank_you_text: thankYouText(b),
     payments: payments.map((p) => ({ id: p.id, method: p.method, amount: Number(p.amount), status: p.status, txn_id: maskTxn(p.txn_id), created_at: p.created_at }))
   };
 }

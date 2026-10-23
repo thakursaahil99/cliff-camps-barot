@@ -156,6 +156,12 @@ export default function BookingStatus() {
 
       <section className="container-x grid max-w-6xl gap-8 py-14 pb-36 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8">
+          {b.status === 'pending' && b.thank_you_text && (
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card relative overflow-hidden p-6 sm:p-8">
+              <span aria-hidden className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-lime/15 blur-2xl" />
+              <p className="relative text-[15px] leading-relaxed whitespace-pre-line text-ink/80 [&::first-line]:font-display [&::first-line]:text-3xl [&::first-line]:text-forest">{b.thank_you_text}</p>
+            </motion.div>
+          )}
           <AnimatePresence>
             {canPay && (
               <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} className="card p-6 sm:p-8">
