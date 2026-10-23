@@ -73,7 +73,7 @@ function Hero() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-forest via-forest/55 to-forest/30 md:bg-gradient-to-r md:from-forest/95 md:via-forest/60 md:to-forest/10" />
       <Snowfall className="-z-10" />
 
-      <motion.div style={{ y: contentY, opacity: fade }} className="container-x relative grid items-center gap-10 pt-32 pb-28 md:grid-cols-[1.4fr_1fr] md:pb-24">
+      <motion.div style={{ y: contentY, opacity: fade }} className="container-x relative grid items-center gap-10 pt-32 pb-28 md:pb-24 lg:grid-cols-[1.4fr_1fr]">
         <div>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.8 }} className="eyebrow">
             {BUSINESS.tagline}
@@ -105,7 +105,7 @@ function Hero() {
           </motion.div>
         </div>
 
-        <motion.div initial={{ opacity: 0, y: 60, rotate: 6 }} animate={{ opacity: 1, y: 0, rotate: 3 }} transition={{ delay: 1, duration: 1.2, ease: [0.16, 1, 0.3, 1] }} className="hidden justify-self-center md:block">
+        <motion.div initial={{ opacity: 0, y: 60, rotate: 6 }} animate={{ opacity: 1, y: 0, rotate: 3 }} transition={{ delay: 1, duration: 1.2, ease: [0.16, 1, 0.3, 1] }} className="hidden justify-self-center lg:block">
           <div className="animate-float [--float-rot:2deg]">
             <VideoCard />
           </div>
@@ -171,11 +171,11 @@ function Highlights() {
 
         <div className="mt-24">
           <SectionHeading eyebrow="Why guests love it" title="Riverside Camping in Swiss Tents" />
-          <Stagger className="mt-14 grid gap-6 md:grid-cols-3" stagger={0.15}>
+          <Stagger className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" stagger={0.15}>
             {HIGHLIGHTS.map((h, i) => (
-              <motion.div key={h.title} variants={item}>
+              <motion.div key={h.title} variants={item} className={i === 2 ? "sm:col-span-2 lg:col-span-1" : undefined}>
                 <TiltCard className="h-full rounded-[2rem]">
-                  <Link to={h.to} className="group relative flex h-[440px] flex-col justify-end overflow-hidden rounded-[2rem] bg-forest text-cream shadow-[0_30px_60px_-30px_rgba(11,42,30,0.7)] sm:h-[480px]">
+                  <Link to={h.to} className="group relative flex h-[380px] flex-col justify-end overflow-hidden rounded-[2rem] bg-forest text-cream shadow-[0_30px_60px_-30px_rgba(11,42,30,0.7)] sm:h-[440px] lg:h-[480px]">
                     <Img photo={h.photo} sizes="(min-width: 768px) 33vw, 100vw" className="absolute inset-0 h-full w-full object-cover transition duration-[1.2s] ease-out group-hover:scale-110" />
                     <div className={`absolute inset-0 bg-gradient-to-t ${h.accent} via-forest/40 to-transparent opacity-0 transition duration-700 group-hover:opacity-100`} />
                     <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/50 to-transparent" />
