@@ -113,7 +113,8 @@ export default function BookingStatus() {
   }
 
   const b = data.booking;
-  const canPay = b.status !== 'cancelled' && !['paid', 'refunded', 'proof_submitted'].includes(b.payment_status) && b.balance_due > 0 && b.dates_available;
+  // UPI is handled on WhatsApp, so the page only offers online (Razorpay) payment when it is set up
+  const canPay = Boolean(data.payments?.razorpay?.enabled) && b.status !== 'cancelled' && !['paid', 'refunded', 'proof_submitted'].includes(b.payment_status) && b.balance_due > 0 && b.dates_available;
   const heading =
     b.status === 'cancelled' ? 'Booking cancelled' : b.status === 'confirmed' ? 'You’re all set!' : b.payment_status === 'proof_submitted' ? 'Payment received - verifying' : fresh ? 'Request received!' : 'Complete your booking';
 
@@ -132,7 +133,7 @@ export default function BookingStatus() {
           </motion.h1>
           {b.status === 'pending' && b.payment_status === 'unpaid' && b.dates_available && (
             <p className="mt-4 max-w-2xl text-cream/75">
-              We’ve emailed {b.email} a copy. Your dates are held until <strong>{new Date(b.hold_expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</strong> - pay the advance of {inr(b.advance_amount - b.amount_paid)} below to confirm.
+              We’ve emailed {b.email} a copy. Your dates are held until <strong>{new Date(b.hold_expires_at).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}</strong> - {b.payment_method === 'razorpay' && data.payments?.razorpay?.enabled ? `pay the advance of ${inr(b.advance_amount - b.amount_paid)} below to confirm.` : `send your booking on WhatsApp and we’ll share the payment details for the ${inr(b.advance_amount - b.amount_paid)} advance.`}
             </p>
           )}
           {b.status === 'pending' && b.payment_status === 'unpaid' && b.dates_available && (
@@ -140,7 +141,7 @@ export default function BookingStatus() {
               <a href={location.state?.whatsappUrl || b.whatsapp_url} target="_blank" rel="noopener noreferrer" className="btn bg-[#25D366] px-7 py-4 text-base text-white shadow-[0_10px_30px_-10px_rgba(37,211,102,0.9)] hover:bg-[#1fb457]">
                 <MessageCircle size={20} /> {location.state?.waOpened ? 'Open WhatsApp again' : 'Send booking on WhatsApp'}
               </a>
-              <p className="text-sm text-cream/70">Pay the advance with the UPI QR below, then send the screenshot on WhatsApp.</p>
+              <p className="text-sm text-cream/70">We’ll reply with the payment details. Your booking is confirmed as soon as the advance reaches us.</p>
             </motion.div>
           )}
           {b.payment_status === 'proof_submitted' && <p className="mt-4 max-w-2xl text-cream/75">Thanks! We’re checking your UPI payment. You’ll get a confirmation email with your receipt as soon as it’s verified - this page updates by itself.</p>}
@@ -172,7 +173,7 @@ export default function BookingStatus() {
                     <button type="button" onClick={() => setPayBalance(true)} className="btn-outline">Pay balance online now</button>
                   </div>
                 ) : (
-                  <div className="mt-4"><PaymentPanel booking={b} upi={data.upi} paymentsConfig={data.payments} token={token} onUpdated={load} /></div>
+                  <div className="mt-4"><PaymentPanel booking={b} upi={null} paymentsConfig={data.payments} token={token} onUpdated={load} /></div>
                 )}
               </motion.div>
             )}

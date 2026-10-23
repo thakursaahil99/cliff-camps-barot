@@ -193,7 +193,7 @@ test('WhatsApp flow: admin records the UPI advance -> confirmed + receipt; guest
   const created = await api('POST', '/bookings', guest({ check_in: D(60), check_out: D(62), email: 'wa@example.com' }));
   assert.equal(created.status, 201);
   const b = created.body.booking;
-  assert.match(decodeURIComponent(created.body.whatsappUrl), /send the payment screenshot here/);
+  assert.match(decodeURIComponent(created.body.whatsappUrl), /share the payment details for the advance/);
   const url = `/admin/bookings/${b.id}`;
 
   assert.equal((await admin('PATCH', url, { action: 'record_payment' })).status, 400);

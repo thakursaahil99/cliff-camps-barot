@@ -84,8 +84,8 @@ export function guestRequestEmail(b, tent) {
     <h1 style="margin:0 0 8px;font-size:22px;color:${C.forest}">Thank you, ${esc(b.guest_name)}!</h1>
     <p style="margin:0 0 12px;line-height:1.6">We've received your booking request for riverside camping at Cliff Camps, Barot. Your dates are held for you while you complete the advance payment.</p>
     ${summaryTable(b, tent)}
-    <p style="line-height:1.6">To confirm, pay the advance of <strong>${inr(b.advance_amount)}</strong> by UPI or online from your booking page. The balance can be paid at the property.</p>
-    <p style="text-align:center">${button(bookingLink(b), 'View booking & pay advance')}</p>
+    <p style="line-height:1.6">To confirm, pay the advance of <strong>${inr(b.advance_amount)}</strong>. ${b.payment_method === 'razorpay' ? 'You can pay online from your booking page.' : `We'll share the payment details on WhatsApp - or message us at ${B.whatsapp.slice(2)}.`} The balance can be paid at the property.</p>
+    <p style="text-align:center">${button(bookingLink(b), 'View your booking')}</p>
     <p style="font-size:13px;color:#5b6b60;line-height:1.6">Questions? Reply to this email or WhatsApp us at ${B.whatsapp.slice(2)}.</p>`);
   return { subject, html };
 }

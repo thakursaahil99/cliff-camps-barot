@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowRight, CalendarDays, Check, CreditCard, Instagram, Mail, MapPin, MessageCircle, Minus, Phone, Plus, QrCode, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, CalendarDays, Check, CreditCard, Instagram, Mail, MapPin, MessageCircle, Minus, Phone, Plus, ShieldCheck, Users } from 'lucide-react';
 import { api, qs } from '../lib/api.js';
 import { BUSINESS, PHOTOS, whatsappUrl } from '../lib/site.js';
 import { useSiteConfig, useTents } from '../lib/hooks.js';
@@ -342,7 +342,7 @@ function BookingForm() {
         <Step n={4} title="How you’d like to pay" done={datesDone && detailsDone}>
           <div className="grid gap-4 sm:grid-cols-2">
             {[
-              { id: 'upi', icon: QrCode, title: 'UPI direct', text: 'GPay, PhonePe, Paytm or any UPI app. Zero fees.' },
+              { id: 'upi', icon: MessageCircle, title: 'Pay via WhatsApp', text: 'We share the UPI payment details on WhatsApp. GPay, PhonePe, Paytm - zero fees.' },
               { id: 'razorpay', icon: CreditCard, title: 'Pay online', text: 'UPI, cards or netbanking via Razorpay secure checkout.' }
             ]
               .filter((m) => payments[m.id]?.enabled)
@@ -364,7 +364,9 @@ function BookingForm() {
           </div>
           <p className="mt-4 flex items-start gap-2 text-sm text-ink/60">
             <ShieldCheck size={18} className="mt-0.5 shrink-0 text-lime-700" />
-            You pay a {config?.booking.advancePercent ?? 30}% advance on the next screen to confirm. The balance is paid at the property. We never see or store your card details.
+            {whatsappFlow
+              ? `You pay a ${config?.booking.advancePercent ?? 30}% advance to confirm - we share the payment details on WhatsApp and confirm once it arrives. The balance is paid at the property.`
+              : `You pay a ${config?.booking.advancePercent ?? 30}% advance on the next screen to confirm. The balance is paid at the property. We never see or store your card details.`}
           </p>
         </Step>
       </div>
@@ -390,7 +392,7 @@ function BookingForm() {
           {!submitting && <ArrowRight size={18} />}
         </motion.button>
         <p id="book-hint" className="mt-2 text-center text-xs text-ink/50">
-          {missing ? `${missing} to continue` : whatsappFlow ? 'Your dates are held and WhatsApp opens with your booking details. Pay the advance by UPI and send the screenshot there.' : 'Your dates are held while you pay the advance online.'}
+          {missing ? `${missing} to continue` : whatsappFlow ? 'Your dates are held and WhatsApp opens with your booking details. We’ll share the payment details there.' : 'Your dates are held while you pay the advance online.'}
         </p>
       </aside>
     </form>

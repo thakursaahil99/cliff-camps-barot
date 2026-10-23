@@ -62,7 +62,7 @@ export function whatsappLink(b, tent) {
     `Total: ${inr(b.total_price)}`,
     `Name: ${b.guest_name}, Phone: ${b.phone}`,
     ...(b.status === 'pending' && advanceDue > 0
-      ? ['', `I'll pay the advance of ${inr(advanceDue)}${config.upi.id ? ` by UPI to ${config.upi.id}` : ''} and send the payment screenshot here.`]
+      ? ['', `Please share the payment details for the advance of ${inr(advanceDue)}.`]
       : [])
   ].join('\n');
   return `https://wa.me/${config.business.whatsapp}?text=${encodeURIComponent(text)}`;
