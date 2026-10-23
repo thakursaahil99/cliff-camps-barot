@@ -7,3 +7,6 @@ backend/.data/
 *.log
 .DS_Store
 .vercel
+
+# Original photos/videos sent by the camp (optimized copies live in frontend/public)
+media-originals/

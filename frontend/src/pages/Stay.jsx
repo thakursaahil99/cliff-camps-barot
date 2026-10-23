@@ -148,7 +148,7 @@ export default function Stay() {
               transition={{ delay: 0.4, type: 'spring', stiffness: 120 }}
               className="absolute -right-3 -bottom-8 w-44 overflow-hidden rounded-3xl border-4 border-cream shadow-xl sm:-right-8 sm:w-56"
             >
-              <Img photo={PHOTOS.tentWindow} sizes="224px" className="aspect-[3/4] w-full object-cover" />
+              <Img photo={PHOTOS.winterTents} sizes="224px" className="aspect-[3/4] w-full object-cover" />
             </motion.div>
           </Reveal>
           <div>

@@ -2,10 +2,11 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Fish, Footprints, Landmark, Mountain, PawPrint, Snowflake, TrainFront, Trees, UtensilsCrossed, Waves } from 'lucide-react';
-import { PHOTOS, whatsappUrl } from '../lib/site.js';
+import { PHOTOS, VIDEOS, whatsappUrl } from '../lib/site.js';
 import { useMediaQuery } from '../lib/hooks.js';
 import { Img, PageHero, SectionHeading, Seo } from '../components/ui.jsx';
 import { Reveal } from '../components/motion.jsx';
+import Reel from '../components/Reel.jsx';
 
 const STORIES = [
   {
@@ -29,8 +30,9 @@ const STORIES = [
     icon: Snowflake,
     eyebrow: 'Snow not far away',
     title: 'Views of white snow peaks',
-    text: 'Pine-covered hills rise straight from the river, and white snow peaks are not far away. Clear mornings in the Barot valley are something else.',
-    photos: [PHOTOS.valley, PHOTOS.tentsRow]
+    text: 'Pine-covered hills rise straight from the river, and white snow peaks are not far away. In winter the snow comes right down to the camp - tents, pines and hills all turn white.',
+    photos: [PHOTOS.winterCamp, PHOTOS.winterTents],
+    video: VIDEOS.winterNights
   },
   {
     id: 'food',
@@ -50,14 +52,14 @@ function Story({ s, index }) {
   const rot = useTransform(scrollYProgress, [0, 1], [index % 2 ? -8 : 8, index % 2 ? 4 : -4]);
   const flip = index % 2 === 1;
   return (
-    <section id={s.id} ref={ref} className="scroll-mt-24 py-16 sm:py-24">
+    <section id={s.id} ref={ref} className="scroll-mt-24 overflow-x-clip py-16 sm:py-24">
       <div className={`container-x grid items-center gap-12 lg:grid-cols-2 lg:gap-20 ${flip ? 'lg:[&>*:first-child]:order-2' : ''}`}>
         <div className="relative mx-auto w-full max-w-xl">
           <motion.div style={{ y: y1 }} className="overflow-hidden rounded-[2.5rem] shadow-[0_40px_80px_-40px_rgba(11,42,30,0.6)]">
             <Img photo={s.photos[0]} sizes="(min-width: 1024px) 45vw, 100vw" className="aspect-[4/3] w-full object-cover" />
           </motion.div>
           <motion.div style={{ y: y2, rotate: rot }} className={`absolute -bottom-10 w-36 overflow-hidden rounded-3xl border-[5px] border-cream shadow-2xl sm:w-48 ${flip ? '-left-4 sm:-left-10' : '-right-4 sm:-right-10'}`}>
-            <Img photo={s.photos[1]} sizes="200px" className="aspect-[3/4] w-full object-cover" />
+            {s.video ? <Reel video={s.video} showLabel={false} className="!rounded-[1.1rem] !shadow-none" /> : <Img photo={s.photos[1]} sizes="200px" className="aspect-[3/4] w-full object-cover" />}
           </motion.div>
         </div>
         <Reveal x={flip ? -40 : 40} y={0}>

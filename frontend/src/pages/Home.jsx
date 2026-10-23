@@ -2,11 +2,12 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, BedDouble, ChevronDown, Instagram, Mountain, Pause, Play, UtensilsCrossed } from 'lucide-react';
-import { BUSINESS, PHOTOS, VIDEO, whatsappUrl } from '../lib/site.js';
+import { BUSINESS, PHOTOS, VIDEO, VIDEOS, whatsappUrl } from '../lib/site.js';
 import { useMediaQuery } from '../lib/hooks.js';
 import { Img, Logo, SectionHeading, Seo } from '../components/ui.jsx';
 import { Magnetic, Marquee, Reveal, RiverWaves, SplitText, Stagger, TiltCard, item } from '../components/motion.jsx';
 import Snowfall from '../components/Snowfall.jsx';
+import Reel from '../components/Reel.jsx';
 
 function RotatingBadge({ size = 132 }) {
   const reduce = useReducedMotion();
@@ -201,9 +202,48 @@ function Highlights() {
   );
 }
 
+function Winter() {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const yA = useTransform(scrollYProgress, [0, 1], ['10%', '-10%']);
+  const yB = useTransform(scrollYProgress, [0, 1], ['24%', '-14%']);
+  const yPhoto = useTransform(scrollYProgress, [0, 1], ['-6%', '6%']);
+  return (
+    <section ref={ref} className="grain relative isolate overflow-hidden bg-forest-950 py-24 text-cream sm:py-32">
+      <Snowfall density={0.00025} className="-z-10" />
+      <div aria-hidden className="absolute top-0 left-1/2 -z-10 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-teal/20 blur-[120px]" />
+      <div className="container-x grid items-center gap-14 lg:grid-cols-[1fr_1.05fr] lg:gap-16">
+        <div>
+          <SectionHeading align="left" dark eyebrow="Winter at the camp" title="When snow falls on Barot" className="!mx-0">
+            In winter the whole camp turns white - snow on the tents, the pines and the hills all around. Real moments from Cliff Camps, filmed at the camp.
+          </SectionHeading>
+          <Reveal delay={0.15} className="relative mt-10">
+            <motion.div style={{ y: yPhoto }} className="overflow-hidden rounded-[2rem] shadow-2xl ring-1 ring-cream/10">
+              <Img photo={PHOTOS.winterCamp} sizes="(min-width: 1024px) 45vw, 100vw" className="aspect-[4/3] w-full object-cover object-[50%_60%] transition duration-[1.5s] hover:scale-105" />
+            </motion.div>
+            <span className="absolute -top-4 -left-3 rotate-[-6deg] rounded-full bg-sun px-4 py-1.5 font-script text-xl text-forest shadow-lg">Snow day!</span>
+          </Reveal>
+          <Reveal delay={0.25} className="mt-10 flex flex-wrap gap-3">
+            <Link to="/book" className="btn-primary">Book a winter stay <ArrowRight size={16} /></Link>
+            <Link to="/gallery" className="btn-ghost">More winter photos</Link>
+          </Reveal>
+        </div>
+        <div className="grid grid-cols-2 gap-4 sm:gap-6">
+          <motion.div style={{ y: yA }}>
+            <Reveal><Reel video={VIDEOS.winterNights} /></Reveal>
+          </motion.div>
+          <motion.div style={{ y: yB }} className="mt-16 sm:mt-24">
+            <Reveal delay={0.15}><Reel video={VIDEOS.winterDay} /></Reveal>
+          </motion.div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function GalleryStrip() {
-  const row1 = [PHOTOS.riverside, PHOTOS.foodHub, PHOTOS.blueTents, PHOTOS.pond, PHOTOS.yellowTent, PHOTOS.tentWindow, PHOTOS.lamp];
-  const row2 = [PHOTOS.valley, PHOTOS.tentInterior, PHOTOS.trout, PHOTOS.meadow, PHOTOS.buddha, PHOTOS.tentsRow, PHOTOS.valleyView];
+  const row1 = [PHOTOS.riverside, PHOTOS.winterTents, PHOTOS.foodHub, PHOTOS.blueTents, PHOTOS.winterBonfire, PHOTOS.pond, PHOTOS.yellowTent, PHOTOS.tentWindow, PHOTOS.lamp];
+  const row2 = [PHOTOS.valley, PHOTOS.tentInterior, PHOTOS.winterChairs, PHOTOS.trout, PHOTOS.meadow, PHOTOS.winterDog, PHOTOS.buddha, PHOTOS.tentsRow, PHOTOS.valleyView];
   const tile = (p, i, wide) => (
     <Link key={i} to="/gallery" className={`group relative block shrink-0 overflow-hidden rounded-3xl ${wide ? 'h-56 w-80 sm:h-64 sm:w-96' : 'h-56 w-44 sm:h-64 sm:w-52'}`}>
       <Img photo={p} sizes="400px" className="h-full w-full object-cover transition duration-700 group-hover:scale-110" />
@@ -313,6 +353,7 @@ export default function Home() {
       />
       <Hero />
       <Highlights />
+      <Winter />
       <GalleryStrip />
       <SocialProof />
       <FinalCta />

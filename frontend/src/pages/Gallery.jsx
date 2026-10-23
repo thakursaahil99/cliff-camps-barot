@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Expand, X } from 'lucide-react';
-import { BUSINESS, GALLERY, PHOTOS } from '../lib/site.js';
-import { Img, PageHero, Seo } from '../components/ui.jsx';
+import { BUSINESS, GALLERY, PHOTOS, VIDEOS } from '../lib/site.js';
+import { Img, PageHero, SectionHeading, Seo } from '../components/ui.jsx';
+import { Stagger, item } from '../components/motion.jsx';
+import Reel from '../components/Reel.jsx';
 
-const FILTERS = ['All', 'Camp', 'Tents', 'Food', 'Valley'];
+const FILTERS = ['All', 'Camp', 'Tents', 'Winter', 'Food', 'Valley'];
 
 function Lightbox({ photos, index, onClose, onNav }) {
   const photo = photos[index];
@@ -99,8 +101,21 @@ export default function Gallery() {
 
   return (
     <>
-      <Seo title="Gallery" path="/gallery" description="Photos of Cliff Camps, Barot - Swiss tents, the riverside camp, the Barot valley and the trout treat from our kitchen." />
-      <PageHero eyebrow="Gallery" title="A look around the camp" intro="Real photos from Cliff Camps - the tents, the river, the valley and the kitchen." photo={PHOTOS.pond} />
+      <Seo title="Gallery" path="/gallery" description="Photos and videos of Cliff Camps, Barot - Swiss tents, the riverside camp in summer and under winter snow, the Barot valley and the trout treat from our kitchen." />
+      <PageHero eyebrow="Gallery" title="A look around the camp" intro="Real photos and videos from Cliff Camps - the tents, the river, the valley, the kitchen and the camp under snow." photo={PHOTOS.winterCamp} />
+
+      <section className="bg-forest py-20 text-cream sm:py-24">
+        <div className="container-x">
+          <SectionHeading dark eyebrow="Watch" title="Camp videos" />
+          <Stagger className="mx-auto mt-12 grid max-w-4xl grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6" stagger={0.12}>
+            {[VIDEOS.tour, VIDEOS.winterNights, VIDEOS.winterDay].map((v, i) => (
+              <motion.div key={v.src} variants={item} className={i === 2 ? 'col-span-2 mx-auto w-1/2 sm:col-span-1 sm:w-full' : undefined}>
+                <Reel video={v} />
+              </motion.div>
+            ))}
+          </Stagger>
+        </div>
+      </section>
 
       <section className="py-16 pb-36 sm:py-20 sm:pb-40">
         <div className="container-x">

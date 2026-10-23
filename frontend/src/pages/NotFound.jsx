@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, Compass } from 'lucide-react';
-import { Seo } from '../components/ui.jsx';
+import { Img, Seo } from '../components/ui.jsx';
+import { PHOTOS } from '../lib/site.js';
 import { RiverWaves } from '../components/motion.jsx';
 import Snowfall from '../components/Snowfall.jsx';
 
@@ -9,6 +10,8 @@ export default function NotFound() {
   return (
     <section className="grain relative isolate flex min-h-[90svh] flex-col items-center justify-center overflow-hidden bg-forest px-4 pt-28 pb-40 text-center text-cream">
       <Seo title="Page not found" noindex />
+      <Img photo={PHOTOS.winterCamp} priority alt="" className="absolute inset-0 -z-20 h-full w-full object-cover opacity-25" />
+      <div aria-hidden className="absolute inset-0 -z-20 bg-gradient-to-b from-forest/40 via-forest/70 to-forest" />
       <Snowfall className="-z-10" />
       <motion.div animate={{ rotate: [0, 20, -15, 10, 0] }} transition={{ duration: 3, repeat: Infinity, repeatDelay: 1 }} className="mb-6 text-lime">
         <Compass size={64} strokeWidth={1.5} />

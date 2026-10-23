@@ -63,12 +63,26 @@ export const PHOTOS = {
   valleyView: { ...img('camp-valley', [540], 538, 785), alt: 'Clouds over the green mountains above the camp', category: 'Valley' },
   tentWindow: { ...img('camp-tent-window', [540], 538, 785), alt: 'Sunlight through a curtained Swiss tent window', category: 'Tents' },
   tentsRow: { ...img('camp-tents-row', [540], 538, 785), alt: 'Row of colourful tents at Cliff Camps with the valley behind', category: 'Camp' },
-  fountain: { ...img('camp-fountain', [540], 538, 785), alt: 'Buddha water fountain among the trees at the camp', category: 'Camp' }
+  fountain: { ...img('camp-fountain', [540], 538, 785), alt: 'Buddha water fountain among the trees at the camp', category: 'Camp' },
+  // Winter photo and stills from the camp's own winter videos (sent by the camp)
+  winterCamp: { ...img('winter-camp', [640, 1200], 1200, 1200), alt: 'Cliff Camps under fresh snow - the camp building with its Cliff Camps sign, snowy pines and a hot drink in the foreground', category: 'Winter' },
+  winterTents: { ...img('winter-tents', [478], 478, 520), alt: 'Swiss tents covered in snow below the snowy mountainside', category: 'Winter' },
+  winterTent: { ...img('winter-tent', [478], 478, 390), alt: 'Yellow-roofed Swiss tent with snow piled on the roof', category: 'Winter' },
+  winterChairs: { ...img('winter-chairs', [478], 478, 520), alt: 'Colourful chairs in the snow with blue and yellow tents behind on a sunny January day', category: 'Winter' },
+  winterDog: { ...img('winter-dog', [478], 478, 520), alt: 'The camp dog standing in the snow in front of the tents', category: 'Winter' },
+  winterBonfire: { ...img('winter-bonfire', [478], 478, 390), alt: 'A bonfire on a winter night at the camp, with lit tents in the background', category: 'Winter' }
 };
 
 export const GALLERY = [
-  PHOTOS.riverside, PHOTOS.tentInterior, PHOTOS.foodHub, PHOTOS.valley, PHOTOS.blueTents, PHOTOS.trout, PHOTOS.yellowTent,
-  PHOTOS.pond, PHOTOS.buddha, PHOTOS.meadow, PHOTOS.tentWindow, PHOTOS.valleyView, PHOTOS.lamp, PHOTOS.tentsRow, PHOTOS.fountain
+  PHOTOS.riverside, PHOTOS.winterCamp, PHOTOS.tentInterior, PHOTOS.foodHub, PHOTOS.winterTents, PHOTOS.valley, PHOTOS.blueTents,
+  PHOTOS.winterBonfire, PHOTOS.trout, PHOTOS.yellowTent, PHOTOS.winterChairs, PHOTOS.pond, PHOTOS.buddha, PHOTOS.winterDog,
+  PHOTOS.meadow, PHOTOS.tentWindow, PHOTOS.winterTent, PHOTOS.valleyView, PHOTOS.lamp, PHOTOS.tentsRow, PHOTOS.fountain
 ];
 
 export const VIDEO = { src: '/video/camp-tour.mp4', poster: '/video/camp-tour-poster.webp' };
+
+export const VIDEOS = {
+  tour: { ...VIDEO, label: 'Camp tour', alt: 'Short video tour of Cliff Camps, Barot' },
+  winterNights: { src: '/video/winter-nights.mp4', poster: '/video/winter-nights-poster.webp', label: 'Snowy nights', alt: 'Snowfall at night and a bonfire at Cliff Camps in winter' },
+  winterDay: { src: '/video/winter-january.mp4', poster: '/video/winter-january-poster.webp', label: 'January snow', alt: 'Cliff Camps under snow on a sunny January day' }
+};

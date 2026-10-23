@@ -438,7 +438,7 @@ export default function Book() {
         path="/book"
         description="Book a riverside Swiss tent at Cliff Camps, Barot. Live availability, instant price, UPI or online advance. Call 8219850117 or WhatsApp us."
       />
-      <PageHero eyebrow="Book & Contact" title="Book your riverside tent" intro="Live availability, instant pricing and a small advance to confirm. Prefer to talk? Call or WhatsApp us any time." photo={PHOTOS.blueTents}>
+      <PageHero eyebrow="Book & Contact" title="Book your riverside tent" intro="Live availability, instant pricing and a small advance to confirm. Prefer to talk? Call or WhatsApp us any time." photo={PHOTOS.winterCamp}>
         <div className="mt-8 flex flex-wrap gap-3">
           <a href="#booking" className="btn-primary">Start booking</a>
           <a href="#contact" className="btn-ghost">Contact & map</a>
