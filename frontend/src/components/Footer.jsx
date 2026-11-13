@@ -103,7 +103,7 @@ export default function Footer() {
         <div className="container-x flex flex-col items-center justify-between gap-2 py-6 text-xs text-cream/50 sm:flex-row">
           <p>© {new Date().getFullYear()} Cliff Camps, Barot. All rights reserved.</p>
           <p>
-            Built by <span className="font-semibold text-cream/80">Sahil Thakur</span> ·{' '}
+            Website designed &amp; developed by <span className="font-semibold text-cream/80">Sahil Thakur</span> · Contact:{' '}
             <a href="tel:+919805338877" className="font-semibold text-cream/80 underline decoration-cream/30 underline-offset-4 transition hover:text-lime hover:decoration-lime">
               98053 38877
             </a>
